@@ -214,7 +214,32 @@ class DayNoteCreateView(LoginRequiredMixin, CreateView):
     model = DayNote
     form_class = DayNoteForm
     template_name = 'care_tracking/daynote_form.html'
-    success_url = reverse_lazy('care_tracking:daynote_list')
+
+    def get_initial(self):
+        """Pre-fill date if provided in query params"""
+        initial = super().get_initial()
+        date_str = self.request.GET.get('date')
+        if date_str:
+            try:
+                initial['date'] = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        return initial
+
+    def get_success_url(self):
+        """Redirect back to day view if date was provided"""
+        date_str = self.request.GET.get('date')
+        if date_str:
+            try:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                return reverse_lazy('care_tracking:day_view', kwargs={
+                    'year': date_obj.year,
+                    'month': date_obj.month,
+                    'day': date_obj.day
+                })
+            except ValueError:
+                pass
+        return reverse_lazy('care_tracking:daynote_list')
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -227,7 +252,15 @@ class DayNoteUpdateView(LoginRequiredMixin, UserOwnsObjectMixin, UpdateView):
     model = DayNote
     form_class = DayNoteForm
     template_name = 'care_tracking/daynote_form.html'
-    success_url = reverse_lazy('care_tracking:daynote_list')
+
+    def get_success_url(self):
+        """Redirect back to day view"""
+        day_note = self.get_object()
+        return reverse_lazy('care_tracking:day_view', kwargs={
+            'year': day_note.date.year,
+            'month': day_note.date.month,
+            'day': day_note.date.day
+        })
 
     def form_valid(self, form):
         messages.success(self.request, 'Day note updated successfully!')

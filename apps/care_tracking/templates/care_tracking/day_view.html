@@ -30,7 +30,7 @@
     <div class="card mb-4">
         <div class="card-body text-center text-muted">
             <p class="mb-2">No day note for this date.</p>
-            <a href="{% url 'care_tracking:daynote_create' %}" class="btn btn-sm btn-outline-primary">Add Day Note</a>
+            <a href="{% url 'care_tracking:daynote_create' %}?date={{ selected_date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">Add Day Note</a>
         </div>
     </div>
     {% endif %}
