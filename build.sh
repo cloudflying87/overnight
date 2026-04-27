@@ -109,7 +109,7 @@ docker compose logs --tail=20 web
 
 echo ""
 echo -e "${GREEN}✅ Deployment complete!${NC}"
-echo -e "${GREEN}🌐 Application is running at: http://localhost:8000${NC}"
+echo -e "${GREEN}🌐 Application is running at: http://localhost:16292${NC}"
 echo ""
 echo "Useful commands:"
 echo "  - View logs: docker compose logs -f web"
