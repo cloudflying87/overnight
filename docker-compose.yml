@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: overnight_web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - overnight_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: overnight_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - overnight_network
+
+volumes:
+  static_volume:
+  redis_data:
+
+networks:
+  overnight_network:
+    driver: bridge

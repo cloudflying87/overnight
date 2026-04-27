@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Event Options - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Event Options</h2>
+            <p class="text-muted">Manage your customizable event types</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'care_tracking:eventoption_create' %}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Add New Option
+            </a>
+        </div>
+    </div>
+
+    {% if options %}
+    <div class="row">
+        {% for option in options %}
+        <div class="col-md-6 mb-3">
+            <div class="card {% if not option.is_active %}bg-light{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title">
+                                <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
+                                {% if not option.is_active %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </h5>
+                            {% if option.description %}
+                            <p class="card-text text-muted">{{ option.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="btn-group">
+                            <a href="{% url 'care_tracking:eventoption_update' option.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{% url 'care_tracking:eventoption_delete' option.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-gear text-muted mb-3" viewBox="0 0 16 16">
+                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+            </svg>
+            <h4>No Event Options</h4>
+            <p class="text-muted">Create event options to categorize nighttime events.</p>
+            <a href="{% url 'care_tracking:eventoption_create' %}" class="btn btn-primary">Create Your First Option</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="card-title text-center mb-4">Create Account</h2>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.username.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.email.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.display_name.id_for_label }}" class="form-label">Display Name</label>
+                            {{ form.display_name }}
+                            <small class="form-text text-muted">Optional - shown in the app instead of username</small>
+                            {% if form.display_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.display_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.password1.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.password2.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Sign Up</button>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="text-center">
+                            <small>
+                                Already have an account? <a href="{% url 'users:login' %}">Login</a>
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

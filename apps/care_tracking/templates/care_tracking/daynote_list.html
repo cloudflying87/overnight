@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Day Notes - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Day Notes</h2>
+            <p class="text-muted">Track daily activities and observations</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'care_tracking:daynote_create' %}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Add Day Note
+            </a>
+        </div>
+    </div>
+
+    {% if notes %}
+    <div class="row">
+        {% for note in notes %}
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title">{{ note.date|date:"l, F d, Y" }}</h5>
+                            <p class="card-text">{{ note.content }}</p>
+                            <p class="text-muted small mb-0">
+                                Last updated: {{ note.updated_at|date:"M d, Y g:i A" }}
+                            </p>
+                        </div>
+                        <div class="btn-group ms-3">
+                            <a href="{% url 'care_tracking:daynote_update' note.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{% url 'care_tracking:daynote_delete' note.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-journal-text text-muted mb-3" viewBox="0 0 16 16">
+                <path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+                <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+                <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
+            </svg>
+            <h4>No Day Notes Yet</h4>
+            <p class="text-muted">Add notes about daily activities to correlate with nighttime events.</p>
+            <a href="{% url 'care_tracking:daynote_create' %}" class="btn btn-primary">Add Your First Note</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

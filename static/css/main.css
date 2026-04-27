@@ -1,0 +1,72 @@
+/* OvernightApp Custom Styles */
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* Card shadows and spacing */
+.card {
+    border-radius: 0.5rem;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+/* Form styling */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Button styling */
+.btn-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+}
+
+/* Alert styling */
+.alert {
+    border-radius: 0.375rem;
+}
+
+/* Navbar spacing */
+.navbar {
+    margin-bottom: 0;
+}
+
+/* Table styling for future use */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+/* Dashboard cards */
+.stat-card {
+    border-left: 4px solid #0d6efd;
+}
+
+.stat-card h3 {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}

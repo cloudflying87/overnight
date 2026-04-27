@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Welcome, {{ user.get_display_name }}!</h1>
+            <p class="text-muted">Track and monitor nighttime events</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'care_tracking:nightevent_create' %}" class="btn btn-primary btn-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Log Event
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Events This Week</h6>
+                    <h3 class="card-title">{{ events_this_week }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Events</h6>
+                    <h3 class="card-title">{{ total_events }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Day Notes</h6>
+                    <h3 class="card-title">{{ total_notes }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Event Options</h6>
+                    <h3 class="card-title">{{ active_options }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Events -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Night Events</h5>
+                    <a href="{% url 'care_tracking:nightevent_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_events %}
+                    <div class="list-group list-group-flush">
+                        {% for event in recent_events %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ event.event_datetime|date:"M d, Y - g:i A" }}</h6>
+                                    <div class="mb-2">
+                                        {% for option in event.event_options.all %}
+                                        <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% if event.notes %}
+                                    <p class="mb-0 text-muted small">{{ event.notes|truncatewords:20 }}</p>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-link">Edit</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center my-4">No events logged yet. <a href="{% url 'care_tracking:nightevent_create' %}">Log your first event</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Day Notes -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Day Notes</h5>
+                    <a href="{% url 'care_tracking:daynote_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_notes %}
+                    <div class="list-group list-group-flush">
+                        {% for note in recent_notes %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ note.date|date:"M d, Y" }}</h6>
+                                    <p class="mb-0 text-muted small">{{ note.content|truncatewords:15 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center my-4">No notes yet. <a href="{% url 'care_tracking:daynote_create' %}">Add a day note</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <h5 class="mb-3">Quick Actions</h5>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{% url 'care_tracking:nightevent_create' %}" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-moon-stars text-primary mb-2" viewBox="0 0 16 16">
+                        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z"/>
+                        <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"/>
+                    </svg>
+                    <h6>Log Event</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{% url 'care_tracking:daynote_create' %}" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-journal-text text-success mb-2" viewBox="0 0 16 16">
+                        <path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+                        <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+                        <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
+                    </svg>
+                    <h6>Add Day Note</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{% url 'care_tracking:nightevent_list' %}" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-list-ul text-info mb-2" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                    </svg>
+                    <h6>View All Events</h6>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{% url 'care_tracking:eventoption_list' %}" class="card text-decoration-none">
+                <div class="card-body text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-gear text-warning mb-2" viewBox="0 0 16 16">
+                        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+                    </svg>
+                    <h6>Manage Options</h6>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
