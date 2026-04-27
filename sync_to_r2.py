@@ -5,6 +5,7 @@ Uses boto3 (already installed) instead of AWS CLI
 """
 import os
 import sys
+import hashlib
 from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
@@ -18,6 +19,14 @@ AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
 if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL]):
     print("❌ Missing R2 credentials in environment")
     sys.exit(1)
+
+def calculate_md5(file_path):
+    """Calculate MD5 hash of a file"""
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 # Create S3 client for R2
 s3_client = boto3.client(
@@ -52,26 +61,32 @@ for file_path in static_dir.rglob('*'):
         s3_key = f"static/{relative_path}"
 
         try:
-            # Check if file exists in R2 and compare size
-            file_size = file_path.stat().st_size
+            # Calculate MD5 hash of local file
+            local_md5 = calculate_md5(file_path)
+
+            # Check if file exists in R2 and compare MD5
+            should_upload = True
             try:
                 head = s3_client.head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=s3_key)
-                if head['ContentLength'] == file_size:
+                # ETag is the MD5 hash (without quotes)
+                remote_etag = head.get('ETag', '').strip('"')
+                if remote_etag == local_md5:
                     skipped += 1
-                    continue
+                    should_upload = False
             except ClientError:
                 pass  # File doesn't exist in R2, upload it
 
-            # Upload file
-            with open(file_path, 'rb') as f:
-                s3_client.put_object(
-                    Bucket=AWS_STORAGE_BUCKET_NAME,
-                    Key=s3_key,
-                    Body=f,
-                    ACL='public-read'
-                )
-            uploaded += 1
-            print(f"   ✓ {s3_key}")
+            if should_upload:
+                # Upload file
+                with open(file_path, 'rb') as f:
+                    s3_client.put_object(
+                        Bucket=AWS_STORAGE_BUCKET_NAME,
+                        Key=s3_key,
+                        Body=f,
+                        ACL='public-read'
+                    )
+                uploaded += 1
+                print(f"   ✓ {s3_key}")
 
         except Exception as e:
             errors += 1
