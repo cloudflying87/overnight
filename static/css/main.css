@@ -128,3 +128,16 @@ main {
     background-color: var(--bg-secondary);
     color: var(--text-primary);
 }
+
+/* List groups dark mode */
+[data-theme="dark"] .list-group-item {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .card-header {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
