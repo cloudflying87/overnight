@@ -12,6 +12,18 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
+    <!-- Open Graph / Twitter Card -->
+    {% static 'images/AppPicture.png' as og_image %}
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="OvernightApp - Care Tracking">
+    <meta property="og:description" content="Track overnight care events and daily notes for your loved ones.">
+    <meta property="og:image" content="{{ og_image }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="OvernightApp - Care Tracking">
+    <meta name="twitter:description" content="Track overnight care events and daily notes for your loved ones.">
+    <meta name="twitter:image" content="{{ og_image }}">
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
