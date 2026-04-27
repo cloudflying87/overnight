@@ -4,9 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: overnight_web
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -23,8 +21,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: overnight_redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
