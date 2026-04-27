@@ -11,6 +11,9 @@ A Django web application for tracking and monitoring nighttime care events. Buil
 - **Event Options Management**: Customize your own event types with colors
 - **Dashboard**: Overview of recent events and quick statistics
 - **Auto-populated Defaults**: 10 pre-configured event options for new users
+- **Daily Email Summaries**: Automated daily emails with event summaries to multiple recipients
+- **Timezone Support**: All timestamps display in user's local timezone
+- **Calendar View**: Visual calendar showing which days have events/notes
 
 ### 🎯 Default Event Options
 - Underwear change
@@ -199,6 +202,28 @@ python manage.py create_default_options --username=john
 python manage.py create_default_options --all
 ```
 
+### Send Daily Email Summaries
+
+```bash
+# Normal run (checks time and sends if appropriate)
+python manage.py send_daily_emails
+
+# Force send for testing (ignores time check)
+python manage.py send_daily_emails --force
+
+# Test for specific user
+python manage.py send_daily_emails --force --user=john
+```
+
+See [docs/DAILY_EMAILS.md](docs/DAILY_EMAILS.md) for complete setup instructions.
+
+### Import Historical Data
+
+```bash
+# Import from CSV file
+python manage.py import_csv /path/to/file.csv username
+```
+
 ## Development
 
 ### Settings Environments
@@ -292,11 +317,11 @@ All endpoints require authentication except login/signup.
 - Export to CSV/PDF
 
 ### Additional Features
-- Email notifications
 - Shared access for multiple caregivers (households)
 - Mobile app (Django REST API)
 - Advanced pattern detection with ML
 - Custom report builder
+- SMS notifications
 
 ## Troubleshooting
 

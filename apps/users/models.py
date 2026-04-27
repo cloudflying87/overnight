@@ -10,6 +10,12 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=100, blank=True)
     timezone = models.CharField(max_length=50, default='America/Chicago')
+
+    # Daily email settings
+    daily_email_enabled = models.BooleanField(default=False)
+    daily_email_time = models.TimeField(default='07:00:00', help_text='Time to send daily summary email')
+    daily_email_recipients = models.TextField(blank=True, help_text='Comma-separated email addresses')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

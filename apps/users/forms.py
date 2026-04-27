@@ -111,16 +111,28 @@ class SettingsForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('timezone',)
+        fields = ('timezone', 'daily_email_enabled', 'daily_email_time', 'daily_email_recipients')
         widgets = {
             'timezone': forms.Select(
                 choices=[(tz, tz) for tz in pytz.common_timezones],
                 attrs={'class': 'form-select'}
             ),
+            'daily_email_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'daily_email_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'daily_email_recipients': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'email1@example.com, email2@example.com'
+            }),
         }
         labels = {
             'timezone': 'Your Timezone',
+            'daily_email_enabled': 'Enable Daily Summary Email',
+            'daily_email_time': 'Email Time',
+            'daily_email_recipients': 'Email Recipients',
         }
         help_texts = {
             'timezone': 'All times will be displayed in your timezone',
+            'daily_email_time': 'Time to send daily summary (in your timezone)',
+            'daily_email_recipients': 'Comma-separated list of email addresses to receive daily summaries',
         }

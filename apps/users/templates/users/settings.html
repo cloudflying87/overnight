@@ -8,16 +8,16 @@
         <div class="col-lg-8">
             <h2 class="mb-4">Settings</h2>
 
-            <!-- Timezone Settings -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Timezone Preferences</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
+            <form method="post">
+                {% csrf_token %}
 
-                        <div class="mb-3">
+                <!-- Timezone Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Timezone Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-0">
                             <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
                             {{ form.timezone }}
                             {% if form.timezone.errors %}
@@ -27,25 +27,74 @@
                             {% endif %}
                             <small class="form-text text-muted">{{ form.timezone.help_text }}</small>
                         </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Save Settings</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Daily Email Settings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Daily Email Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 form-check">
+                            {{ form.daily_email_enabled }}
+                            <label class="form-check-label" for="{{ form.daily_email_enabled.id_for_label }}">
+                                {{ form.daily_email_enabled.label }}
+                            </label>
+                            {% if form.daily_email_enabled.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.daily_email_enabled.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted d-block">Receive a daily summary of last night's events</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.daily_email_time.id_for_label }}" class="form-label">{{ form.daily_email_time.label }}</label>
+                            {{ form.daily_email_time }}
+                            {% if form.daily_email_time.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.daily_email_time.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.daily_email_time.help_text }}</small>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="{{ form.daily_email_recipients.id_for_label }}" class="form-label">{{ form.daily_email_recipients.label }}</label>
+                            {{ form.daily_email_recipients }}
+                            {% if form.daily_email_recipients.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.daily_email_recipients.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.daily_email_recipients.help_text }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mb-4">
+                    <button type="submit" class="btn btn-primary">Save All Settings</button>
+                </div>
+            </form>
 
             <!-- Additional Settings Info -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">About Timezone Settings</h5>
+                    <h5 class="mb-0">About These Settings</h5>
                 </div>
                 <div class="card-body">
-                    <p class="mb-2">Your timezone setting affects how times are displayed throughout the app:</p>
-                    <ul class="mb-0">
+                    <h6>Timezone</h6>
+                    <ul class="mb-3">
                         <li>Event timestamps will show in your local time</li>
                         <li>Day notes dates will be in your timezone</li>
                         <li>All data is stored in UTC and converted for display</li>
+                    </ul>
+                    <h6>Daily Email</h6>
+                    <ul class="mb-0">
+                        <li>Sent every day at the time you specify</li>
+                        <li>Includes events from the previous 24 hours</li>
+                        <li>Can send to multiple recipients (family members, caregivers, etc.)</li>
                     </ul>
                 </div>
             </div>
