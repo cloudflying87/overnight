@@ -124,7 +124,7 @@ class Command(BaseCommand):
                     'events': events,
                     'day_note': day_note,
                     'yesterday_date': yesterday_date,
-                    'event_count': events.count(),
+                    'event_count': len(events),
                     'user_tz': user_tz,
                 }
 
