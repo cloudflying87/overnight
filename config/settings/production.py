@@ -42,12 +42,14 @@ AWS_S3_OBJECT_PARAMETERS = {
 AWS_S3_CUSTOM_DOMAIN = env('AWS_S3_CUSTOM_DOMAIN', default=None)
 
 # Static files storage backend
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# Use ManifestStaticFilesStorage to create hashed filenames locally
+# Then sync to R2 using sync_to_r2.py script
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
-# Media files storage backend
+# Media files storage backend (upload directly to R2)
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-# Update static and media URLs for R2
+# Update static and media URLs to point to R2 CDN
 if AWS_S3_CUSTOM_DOMAIN:
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
