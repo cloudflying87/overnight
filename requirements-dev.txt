@@ -1,0 +1,36 @@
+# Development and Code Quality Tools
+
+# Code Formatting
+black==24.3.0                    # Python code formatter (PEP 8)
+isort==5.13.2                    # Import sorting
+
+# Linting
+flake8==7.0.0                    # Style guide enforcement
+flake8-bugbear==24.2.6          # Find likely bugs
+flake8-docstrings==1.7.0        # Docstring style checking
+flake8-django==1.4              # Django-specific linting
+pylint==3.1.0                   # Comprehensive linting
+pylint-django==2.5.5            # Django support for pylint
+
+# Type Checking
+mypy==1.9.0                      # Static type checker
+django-stubs==4.2.7             # Django type stubs for mypy
+types-redis==4.6.0.20240218     # Redis type stubs
+
+# Security
+bandit==1.7.8                    # Security issue scanner
+safety==3.1.0                    # Dependency vulnerability checker
+
+# Testing
+pytest==8.1.1                    # Testing framework
+pytest-django==4.8.0             # Django plugin for pytest
+pytest-cov==5.0.0                # Coverage plugin
+coverage==7.4.4                  # Code coverage
+factory-boy==3.3.0               # Test fixtures
+
+# Git Hooks
+pre-commit==3.7.0                # Git pre-commit hooks
+
+# Documentation
+sphinx==7.2.6                    # Documentation generator
+sphinx-rtd-theme==2.0.0          # Read the Docs theme
