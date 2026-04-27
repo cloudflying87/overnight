@@ -42,6 +42,24 @@ DEFAULT_FROM_EMAIL=OvernightApp <noreply@yourdomain.com>
 
 #### Alternative Email Providers
 
+**Brevo (formerly Sendinblue) - Recommended:**
+```bash
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-brevo-email@example.com
+EMAIL_HOST_PASSWORD=your-brevo-smtp-key
+DEFAULT_FROM_EMAIL=OvernightApp <noreply@yourdomain.com>
+```
+
+To get Brevo SMTP credentials:
+1. Sign up at https://www.brevo.com (free tier: 300 emails/day)
+2. Go to Settings → SMTP & API
+3. Create new SMTP key
+4. Use your Brevo login email as EMAIL_HOST_USER
+5. Use the generated SMTP key as EMAIL_HOST_PASSWORD
+
 **SendGrid:**
 ```bash
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
