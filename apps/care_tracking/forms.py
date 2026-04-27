@@ -1,5 +1,6 @@
 from django import forms
 from django.utils import timezone
+import pytz
 from .models import EventOption, NightEvent, DayNote
 
 
@@ -73,9 +74,39 @@ class NightEventForm(forms.ModelForm):
                 is_active=True
             ).order_by('name')
 
-        # Set default datetime to now if not provided
-        if not self.instance.pk:
-            self.initial['event_datetime'] = timezone.now().strftime('%Y-%m-%dT%H:%M')
+            # Convert datetime to user's timezone for display
+            user_tz = pytz.timezone(user.timezone)
+
+            # Set default datetime to now in user's timezone if creating new
+            if not self.instance.pk:
+                now_utc = timezone.now()
+                now_local = now_utc.astimezone(user_tz)
+                self.initial['event_datetime'] = now_local.strftime('%Y-%m-%dT%H:%M')
+            # If editing existing event, convert stored UTC time to user's timezone
+            elif self.instance.event_datetime:
+                event_local = self.instance.event_datetime.astimezone(user_tz)
+                self.initial['event_datetime'] = event_local.strftime('%Y-%m-%dT%H:%M')
+
+        # Store user for later use in clean
+        self.user = user
+
+    def clean_event_datetime(self):
+        """Convert naive datetime from user's timezone to UTC"""
+        event_datetime = self.cleaned_data.get('event_datetime')
+
+        if event_datetime and self.user:
+            # The datetime from the form is naive (no timezone)
+            # It represents the user's local time
+            user_tz = pytz.timezone(self.user.timezone)
+
+            # Make it aware in the user's timezone
+            if timezone.is_naive(event_datetime):
+                local_dt = user_tz.localize(event_datetime)
+                # Convert to UTC for storage
+                utc_dt = local_dt.astimezone(pytz.UTC)
+                return utc_dt
+
+        return event_datetime
 
 
 class DayNoteForm(forms.ModelForm):
