@@ -19,8 +19,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Session configuration
-SESSION_ENGINE = 'django_redis.cache.SessionStore'
+# Session configuration - Use Redis for sessions
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
 # Cloudflare R2 Storage Configuration
