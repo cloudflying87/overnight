@@ -1,6 +1,7 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from .models import User
+import pytz
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -62,3 +63,64 @@ class CustomAuthenticationForm(AuthenticationForm):
             'placeholder': 'Password'
         })
     )
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    """Form for updating user profile"""
+
+    class Meta:
+        model = User
+        fields = ('display_name', 'email')
+        widgets = {
+            'display_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'How you want to be called'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'your@email.com'
+            }),
+        }
+        labels = {
+            'display_name': 'Display Name',
+            'email': 'Email Address',
+        }
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """Custom password change form with Bootstrap styling"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['old_password'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Current Password'
+        })
+        self.fields['new_password1'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'New Password'
+        })
+        self.fields['new_password2'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Confirm New Password'
+        })
+
+
+class SettingsForm(forms.ModelForm):
+    """Form for user settings"""
+
+    class Meta:
+        model = User
+        fields = ('timezone',)
+        widgets = {
+            'timezone': forms.Select(
+                choices=[(tz, tz) for tz in pytz.common_timezones],
+                attrs={'class': 'form-select'}
+            ),
+        }
+        labels = {
+            'timezone': 'Your Timezone',
+        }
+        help_texts = {
+            'timezone': 'All times will be displayed in your timezone',
+        }

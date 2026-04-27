@@ -24,6 +24,14 @@
     <meta name="twitter:description" content="Track overnight care events and daily notes for your loved ones.">
     <meta name="twitter:image" content="{{ og_image }}">
 
+    <!-- PWA -->
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OvernightApp">
+    <link rel="apple-touch-icon" href="{% static 'images/icons/apple-touch-icon.png' %}">
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -61,10 +69,15 @@
                             {{ user.get_display_name }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Profile</a></li>
-                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:profile' %}">Profile</a></li>
+                            <li><a class="dropdown-item" href="{% url 'users:settings' %}">Settings</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'users:logout' %}">Logout</a></li>
+                            <li>
+                                <form method="post" action="{% url 'users:logout' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;">Logout</button>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                 </ul>

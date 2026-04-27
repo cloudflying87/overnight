@@ -9,6 +9,7 @@ class User(AbstractUser):
     """
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=100, blank=True)
+    timezone = models.CharField(max_length=50, default='America/Chicago')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

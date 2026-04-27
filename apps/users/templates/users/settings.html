@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4">Settings</h2>
+
+            <!-- Timezone Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Timezone Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
+                            {{ form.timezone }}
+                            {% if form.timezone.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.timezone.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.timezone.help_text }}</small>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Settings Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">About Timezone Settings</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">Your timezone setting affects how times are displayed throughout the app:</p>
+                    <ul class="mb-0">
+                        <li>Event timestamps will show in your local time</li>
+                        <li>Day notes dates will be in your timezone</li>
+                        <li>All data is stored in UTC and converted for display</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
