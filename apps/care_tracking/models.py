@@ -31,7 +31,7 @@ class EventOption(models.Model):
         verbose_name_plural = 'Event Options'
 
     def __str__(self):
-        return f"{self.user.username} - {self.name}"
+        return self.name
 
 
 class NightEvent(models.Model):

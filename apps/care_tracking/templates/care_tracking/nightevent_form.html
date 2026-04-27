@@ -34,7 +34,7 @@
                                     <div class="form-check">
                                         {{ option.tag }}
                                         <label class="form-check-label" for="{{ option.id_for_label }}">
-                                            <span class="badge" style="background-color: {{ option.choice_label|slice:"-7:" }}">{{ option.choice_label|slice:":-7" }}</span>
+                                            {{ option.choice_label }}
                                         </label>
                                     </div>
                                 </div>
