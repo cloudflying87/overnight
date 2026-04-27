@@ -12,6 +12,12 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="48x48" href="{% static 'images/favicon-48x48.png' %}">
+
     <!-- Open Graph / Twitter Card -->
     {% static 'images/og-image.png' as og_image %}
     <meta property="og:type" content="website">
