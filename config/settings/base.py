@@ -14,10 +14,12 @@ env = environ.Env(
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Read .env file if it exists
-env_file = BASE_DIR / '.env'
-if env_file.exists():
-    environ.Env.read_env(str(env_file))
+# Read .env file if it exists (but not in Docker where env vars are injected by docker-compose)
+# Docker Compose injects env vars directly, so we shouldn't override them with file
+if not os.environ.get('DOCKER_CONTAINER'):
+    env_file = BASE_DIR / '.env'
+    if env_file.exists():
+        environ.Env.read_env(str(env_file))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-temporary-key-change-in-production')
