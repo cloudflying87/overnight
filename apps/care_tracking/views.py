@@ -8,7 +8,8 @@ from django.views.generic import (
 from django.urls import reverse_lazy
 from django.db.models import Count, Q
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
+import calendar
 
 from .models import EventOption, NightEvent, DayNote
 from .forms import EventOptionForm, NightEventForm, DayNoteForm
@@ -242,3 +243,101 @@ class DayNoteDeleteView(LoginRequiredMixin, UserOwnsObjectMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(request, 'Day note deleted successfully!')
         return super().delete(request, *args, **kwargs)
+
+
+# ============================================================================
+# CALENDAR VIEW
+# ============================================================================
+
+@login_required
+def calendar_view(request):
+    """Calendar view showing which days have events"""
+    # Get year and month from query params, default to current
+    today = timezone.now().date()
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+
+    # Create calendar
+    cal = calendar.monthcalendar(year, month)
+
+    # Get days with events for this month
+    month_start = date(year, month, 1)
+    if month == 12:
+        month_end = date(year + 1, 1, 1)
+    else:
+        month_end = date(year, month + 1, 1)
+
+    # Get dates with night events
+    event_dates = set(
+        NightEvent.objects.filter(
+            user=request.user,
+            event_datetime__date__gte=month_start,
+            event_datetime__date__lt=month_end
+        ).values_list('event_datetime__date', flat=True)
+    )
+
+    # Get dates with day notes
+    note_dates = set(
+        DayNote.objects.filter(
+            user=request.user,
+            date__gte=month_start,
+            date__lt=month_end
+        ).values_list('date', flat=True)
+    )
+
+    # Calculate previous and next month
+    if month == 1:
+        prev_month = 12
+        prev_year = year - 1
+    else:
+        prev_month = month - 1
+        prev_year = year
+
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+
+    context = {
+        'calendar': cal,
+        'month': month,
+        'year': year,
+        'month_name': calendar.month_name[month],
+        'event_dates': event_dates,
+        'note_dates': note_dates,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
+        'today': today,
+    }
+
+    return render(request, 'care_tracking/calendar.html', context)
+
+
+@login_required
+def day_view(request, year, month, day):
+    """View all events and notes for a specific day"""
+    selected_date = date(year, month, day)
+
+    # Get all events for this day
+    events = NightEvent.objects.filter(
+        user=request.user,
+        event_datetime__date=selected_date
+    ).prefetch_related('event_options').order_by('event_datetime')
+
+    # Get day note for this day
+    try:
+        day_note = DayNote.objects.get(user=request.user, date=selected_date)
+    except DayNote.DoesNotExist:
+        day_note = None
+
+    context = {
+        'selected_date': selected_date,
+        'events': events,
+        'day_note': day_note,
+    }
+
+    return render(request, 'care_tracking/day_view.html', context)

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load tz_filters %}
+
+{% block title %}{{ selected_date|date:"F d, Y" }} - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>{{ selected_date|date:"F d, Y" }}</h2>
+            <a href="{% url 'care_tracking:calendar' %}" class="btn btn-sm btn-outline-secondary">&laquo; Back to Calendar</a>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'care_tracking:nightevent_create' %}" class="btn btn-primary">Log Event</a>
+        </div>
+    </div>
+
+    <!-- Day Note -->
+    {% if day_note %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Day Note</h5>
+            <a href="{% url 'care_tracking:daynote_update' day_note.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+        </div>
+        <div class="card-body">
+            <p class="mb-0" style="white-space: pre-wrap;">{{ day_note.content }}</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="card mb-4">
+        <div class="card-body text-center text-muted">
+            <p class="mb-2">No day note for this date.</p>
+            <a href="{% url 'care_tracking:daynote_create' %}" class="btn btn-sm btn-outline-primary">Add Day Note</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Events -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Night Events</h5>
+        </div>
+        <div class="card-body">
+            {% if events %}
+            <div class="list-group list-group-flush">
+                {% for event in events %}
+                <div class="list-group-item px-0">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">{{ event.event_datetime|user_timezone:user|date:"g:i A" }}</h6>
+                            <div class="mb-2">
+                                {% for option in event.event_options.all %}
+                                <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
+                                {% endfor %}
+                            </div>
+                            {% if event.notes %}
+                            <p class="mb-0" style="white-space: pre-wrap;">{{ event.notes }}</p>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-link">Edit</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted text-center my-4">No events logged for this day.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

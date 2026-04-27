@@ -25,6 +25,10 @@ urlpatterns = [
     path('notes/<int:pk>/edit/', views.DayNoteUpdateView.as_view(), name='daynote_update'),
     path('notes/<int:pk>/delete/', views.DayNoteDeleteView.as_view(), name='daynote_delete'),
 
+    # Calendar Views
+    path('calendar/', views.calendar_view, name='calendar'),
+    path('day/<int:year>/<int:month>/<int:day>/', views.day_view, name='day_view'),
+
     # Trends (will be added in Phase 6)
     # path('trends/', views.trends_view, name='trends'),
 ]

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Event Calendar</h2>
+            <p class="text-muted">Click on a day to see all events and notes</p>
+        </div>
+    </div>
+
+    <!-- Month Navigation -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-sm btn-outline-primary">&laquo; Previous</a>
+            <h4 class="mb-0">{{ month_name }} {{ year }}</h4>
+            <a href="?year={{ next_year }}&month={{ next_month }}" class="btn btn-sm btn-outline-primary">Next &raquo;</a>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered calendar-table mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center">Sun</th>
+                        <th class="text-center">Mon</th>
+                        <th class="text-center">Tue</th>
+                        <th class="text-center">Wed</th>
+                        <th class="text-center">Thu</th>
+                        <th class="text-center">Fri</th>
+                        <th class="text-center">Sat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar %}
+                    <tr>
+                        {% for day in week %}
+                        <td class="calendar-day {% if day == 0 %}empty{% endif %}">
+                            {% if day != 0 %}
+                                {% with date_obj=year|add:"-01-01"|add:month|add:"-01-01"|add:day|date:"Y-m-d" %}
+                                {% with current_date=year|stringformat:"04d"|add:"-"|add:month|stringformat:"02d"|add:"-"|add:day|stringformat:"02d" %}
+                                {% with is_today=current_date|date:"Y-m-d" == today|date:"Y-m-d" %}
+                                <a href="{% url 'care_tracking:day_view' year month day %}" class="day-link {% if is_today %}today{% endif %}">
+                                    <div class="day-number">{{ day }}</div>
+                                    <div class="day-indicators">
+                                        {% for date in event_dates %}
+                                            {% if date.day == day and date.month == month and date.year == year %}
+                                            <span class="badge bg-primary">E</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% for date in note_dates %}
+                                            {% if date.day == day and date.month == month and date.year == year %}
+                                            <span class="badge bg-success">N</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </a>
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card">
+        <div class="card-body">
+            <h6>Legend:</h6>
+            <p class="mb-1"><span class="badge bg-primary">E</span> = Has Night Events</p>
+            <p class="mb-0"><span class="badge bg-success">N</span> = Has Day Note</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.calendar-table {
+    table-layout: fixed;
+}
+
+.calendar-day {
+    height: 100px;
+    vertical-align: top;
+    padding: 0 !important;
+}
+
+.calendar-day.empty {
+    background-color: var(--bg-secondary);
+}
+
+.day-link {
+    display: block;
+    padding: 8px;
+    height: 100%;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: background-color 0.2s;
+}
+
+.day-link:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.day-link.today {
+    background-color: #fff3cd;
+}
+
+[data-theme="dark"] .day-link.today {
+    background-color: #664d03;
+}
+
+.day-number {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.day-indicators {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.day-indicators .badge {
+    font-size: 0.7rem;
+}
+</style>
+{% endblock %}
