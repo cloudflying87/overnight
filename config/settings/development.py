@@ -7,7 +7,8 @@ from .base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+# ALLOWED_HOSTS comes from base.py (reads from .env or environment variable)
+# Don't override it here!
 
 # Add debug toolbar for development
 INSTALLED_APPS += [
