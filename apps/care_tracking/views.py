@@ -300,23 +300,21 @@ def calendar_view(request):
     else:
         month_end = date(year, month + 1, 1)
 
-    # Get dates with night events
-    event_dates = set(
-        NightEvent.objects.filter(
-            user=request.user,
-            event_datetime__date__gte=month_start,
-            event_datetime__date__lt=month_end
-        ).values_list('event_datetime__date', flat=True)
-    )
+    # Get dates with night events (as day numbers)
+    event_dates_raw = NightEvent.objects.filter(
+        user=request.user,
+        event_datetime__date__gte=month_start,
+        event_datetime__date__lt=month_end
+    ).values_list('event_datetime__date', flat=True)
+    event_days = set(d.day for d in event_dates_raw)
 
-    # Get dates with day notes
-    note_dates = set(
-        DayNote.objects.filter(
-            user=request.user,
-            date__gte=month_start,
-            date__lt=month_end
-        ).values_list('date', flat=True)
-    )
+    # Get dates with day notes (as day numbers)
+    note_dates_raw = DayNote.objects.filter(
+        user=request.user,
+        date__gte=month_start,
+        date__lt=month_end
+    ).values_list('date', flat=True)
+    note_days = set(d.day for d in note_dates_raw)
 
     # Calculate previous and next month
     if month == 1:
@@ -338,8 +336,8 @@ def calendar_view(request):
         'month': month,
         'year': year,
         'month_name': calendar.month_name[month],
-        'event_dates': event_dates,
-        'note_dates': note_dates,
+        'event_days': event_days,
+        'note_days': note_days,
         'prev_month': prev_month,
         'prev_year': prev_year,
         'next_month': next_month,

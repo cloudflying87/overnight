@@ -49,6 +49,14 @@ main {
 
 .card-body {
     padding: 2rem;
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.card-header {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
 /* Form styling */
@@ -190,5 +198,30 @@ main {
 
 [data-theme="dark"] .table-bordered td,
 [data-theme="dark"] .table-bordered th {
+    border-color: var(--border-color);
+}
+
+/* Dropdown menu dark mode */
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-divider {
+    border-color: var(--border-color);
+}
+
+/* Alert dark mode */
+[data-theme="dark"] .alert {
     border-color: var(--border-color);
 }
