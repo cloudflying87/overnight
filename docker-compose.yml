@@ -14,24 +14,12 @@ services:
       - .env
     environment:
       - DOCKER_CONTAINER=true
-    depends_on:
-      - redis
-    restart: unless-stopped
-    networks:
-      - overnight_network
-
-  redis:
-    image: redis:7-alpine
-    container_name: overnight_redis
-    volumes:
-      - redis_data:/data
     restart: unless-stopped
     networks:
       - overnight_network
 
 volumes:
   static_volume:
-  redis_data:
 
 networks:
   overnight_network:

@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     # Third-party apps
     'crispy_forms',
     'crispy_bootstrap5',
-    'django_redis',
     'storages',
 
     # Local apps
@@ -177,16 +176,12 @@ EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 
 
-# Redis Cache Configuration
+# Cache Configuration - Using dummy cache (no caching needed for small app)
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': env('REDIS_URL', default='redis://localhost:6379/0'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        }
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 }
 
-# Session backend (use Redis in production)
+# Session backend - Use database for sessions
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
