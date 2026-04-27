@@ -73,10 +73,18 @@
     table-layout: fixed;
 }
 
+.calendar-table thead th {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
 .calendar-day {
     height: 100px;
     vertical-align: top;
     padding: 0 !important;
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 .calendar-day.empty {
@@ -109,6 +117,7 @@
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 4px;
+    color: var(--text-primary);
 }
 
 .day-indicators {

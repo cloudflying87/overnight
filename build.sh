@@ -21,7 +21,7 @@ git pull origin main || {
 
 # 2. Stop existing containers
 echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
-docker compose down
+docker compose down --remove-orphans
 
 # 3. Build new Docker images
 echo -e "${YELLOW}🔨 Building Docker images...${NC}"
