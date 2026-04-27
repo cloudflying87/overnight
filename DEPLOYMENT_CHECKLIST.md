@@ -31,8 +31,8 @@
 - [ ] R2 sync tested
 
 ### 5. Docker
-- [ ] Docker images built (`docker-compose build`)
-- [ ] Containers start successfully (`docker-compose up`)
+- [ ] Docker images built (`docker compose build`)
+- [ ] Containers start successfully (`docker compose up`)
 - [ ] Database accessible from container
 - [ ] Environment variables loaded correctly
 
@@ -108,7 +108,7 @@
 
 5. **Create superuser**
    ```bash
-   docker-compose exec web python manage.py createsuperuser
+   docker compose exec web python manage.py createsuperuser
    ```
 
 6. **Test the application**
@@ -160,7 +160,7 @@ python -c 'from django.core.management.utils import get_random_secret_key; print
 
 ## 📊 Monitoring Checklist
 
-- [ ] Application logs accessible (`docker-compose logs -f web`)
+- [ ] Application logs accessible (`docker compose logs -f web`)
 - [ ] Database connection monitored
 - [ ] R2 storage usage tracked
 - [ ] Error alerts configured
@@ -173,21 +173,21 @@ python -c 'from django.core.management.utils import get_random_secret_key; print
 
 ```bash
 # Check logs
-docker-compose logs web
+docker compose logs web
 
 # Restart containers
-docker-compose restart
+docker compose restart
 
 # Rebuild from scratch
-docker-compose down
-docker-compose up --build
+docker compose down
+docker compose up --build
 ```
 
 ### Database Connection Issues
 
 ```bash
 # Test connection
-docker-compose exec web python test_db.py
+docker compose exec web python test_db.py
 
 # Check network
 ping hercules
@@ -198,7 +198,7 @@ telnet hercules 5432
 
 ```bash
 # Recollect and sync
-docker-compose exec web python manage.py collectstatic --noinput
+docker compose exec web python manage.py collectstatic --noinput
 # Then run build.sh to sync to R2
 ```
 
@@ -206,13 +206,13 @@ docker-compose exec web python manage.py collectstatic --noinput
 
 ```bash
 # Check migration status
-docker-compose exec web python manage.py showmigrations
+docker compose exec web python manage.py showmigrations
 
 # Apply migrations
-docker-compose exec web python manage.py migrate
+docker compose exec web python manage.py migrate
 
 # Fake migrations if needed (advanced)
-docker-compose exec web python manage.py migrate --fake
+docker compose exec web python manage.py migrate --fake
 ```
 
 ## 🔄 Rollback Plan
@@ -221,7 +221,7 @@ If deployment fails:
 
 1. **Check logs**
    ```bash
-   docker-compose logs --tail=100 web
+   docker compose logs --tail=100 web
    ```
 
 2. **Revert to previous version**
@@ -234,7 +234,7 @@ If deployment fails:
 3. **Database rollback** (if needed)
    ```bash
    # Revert migration
-   docker-compose exec web python manage.py migrate <app_name> <migration_name>
+   docker compose exec web python manage.py migrate <app_name> <migration_name>
    ```
 
 ## 📝 Post-Deployment
@@ -313,10 +313,10 @@ make check-all
 ./build.sh
 
 # Verify services
-docker-compose ps
+docker compose ps
 
 # Check logs
-docker-compose logs --tail=50 web
+docker compose logs --tail=50 web
 
 # Test application
 curl http://localhost:8000

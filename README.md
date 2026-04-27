@@ -144,13 +144,13 @@ Visit `http://localhost:8000` and sign up for an account!
 
 ```bash
 # Build and start services
-docker-compose up --build
+docker compose up --build
 
 # Run migrations (first time)
-docker-compose exec web python manage.py migrate
+docker compose exec web python manage.py migrate
 
 # Create superuser
-docker-compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py createsuperuser
 ```
 
 The app will be available at `http://localhost:8000`

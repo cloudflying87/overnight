@@ -109,25 +109,25 @@ All tables created:
 ### Build and Run
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 ### View Logs
 
 ```bash
-docker-compose logs -f web
+docker compose logs -f web
 ```
 
 ### Stop Containers
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Access Container Shell
 
 ```bash
-docker-compose exec web bash
+docker compose exec web bash
 ```
 
 ## 🔐 Admin Access
@@ -202,7 +202,7 @@ python manage.py shell
 
 - Check the main README.md for detailed documentation
 - Run `python test_db.py` to verify database connection
-- Check logs: `docker-compose logs -f web`
+- Check logs: `docker compose logs -f web`
 
 ---
 

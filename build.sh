@@ -21,15 +21,15 @@ git pull origin main || {
 
 # 2. Stop existing containers
 echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
-docker-compose down
+docker compose down
 
 # 3. Build new Docker images
 echo -e "${YELLOW}🔨 Building Docker images...${NC}"
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # 4. Start containers
 echo -e "${YELLOW}🚀 Starting containers...${NC}"
-docker-compose up -d
+docker compose up -d
 
 # Wait for containers to be ready
 echo -e "${YELLOW}⏳ Waiting for containers to start...${NC}"
@@ -37,11 +37,11 @@ sleep 5
 
 # 5. Run database migrations
 echo -e "${YELLOW}🗄️  Running database migrations...${NC}"
-docker-compose exec -T web python manage.py migrate --noinput
+docker compose exec -T web python manage.py migrate --noinput
 
 # 6. Collect static files
 echo -e "${YELLOW}📦 Collecting static files...${NC}"
-docker-compose exec -T web python manage.py collectstatic --noinput
+docker compose exec -T web python manage.py collectstatic --noinput
 
 # 7. Sync static files to R2 (only changed files)
 echo -e "${YELLOW}☁️  Syncing static files to Cloudflare R2...${NC}"
@@ -95,24 +95,24 @@ fi
 
 # 8. Create default event options for any new users
 echo -e "${YELLOW}🎯 Creating default event options for new users...${NC}"
-docker-compose exec -T web python manage.py create_default_options || {
+docker compose exec -T web python manage.py create_default_options || {
     echo -e "${YELLOW}⚠️  Failed to create default options (may already exist)${NC}"
 }
 
 # 9. Show running containers
 echo -e "${YELLOW}📊 Container status:${NC}"
-docker-compose ps
+docker compose ps
 
 # 10. Show logs (last 20 lines)
 echo -e "${YELLOW}📝 Recent logs:${NC}"
-docker-compose logs --tail=20 web
+docker compose logs --tail=20 web
 
 echo ""
 echo -e "${GREEN}✅ Deployment complete!${NC}"
 echo -e "${GREEN}🌐 Application is running at: http://localhost:8000${NC}"
 echo ""
 echo "Useful commands:"
-echo "  - View logs: docker-compose logs -f web"
-echo "  - Restart: docker-compose restart web"
-echo "  - Stop: docker-compose down"
-echo "  - Shell access: docker-compose exec web bash"
+echo "  - View logs: docker compose logs -f web"
+echo "  - Restart: docker compose restart web"
+echo "  - Stop: docker compose down"
+echo "  - Shell access: docker compose exec web bash"
