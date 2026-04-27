@@ -62,28 +62,21 @@ fi
 
 # Only proceed with R2 sync if credentials are available
 if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_STORAGE_BUCKET_NAME" ]; then
-    # Install AWS CLI if not present
-    if ! command -v aws &> /dev/null; then
-        echo -e "${YELLOW}📥 Installing AWS CLI...${NC}"
-        pip install awscli-plugin-endpoint
-    fi
-
-    # Configure AWS CLI for R2
-    export AWS_DEFAULT_REGION=auto
-
-    # Sync static files to R2 (only upload new/changed files)
-    # Using --size-only to compare file sizes (faster than checksums)
-    # Add --dryrun flag to test without actually uploading
     echo -e "${YELLOW}☁️  Uploading changed static files to R2...${NC}"
 
-    aws s3 sync ./staticfiles/ s3://${AWS_STORAGE_BUCKET_NAME}/static/ \
-        --endpoint-url ${AWS_S3_ENDPOINT_URL} \
-        --size-only \
-        --delete \
-        --exclude "*.pyc" \
-        --exclude "__pycache__/*" \
-        --exclude ".DS_Store" \
-        --acl public-read || {
+    # Install AWS CLI inside container and sync to R2
+    docker compose exec -T web bash -c "
+        pip install --quiet awscli && \
+        aws s3 sync /app/staticfiles/ s3://${AWS_STORAGE_BUCKET_NAME}/static/ \
+            --endpoint-url ${AWS_S3_ENDPOINT_URL} \
+            --region auto \
+            --size-only \
+            --delete \
+            --exclude '*.pyc' \
+            --exclude '__pycache__/*' \
+            --exclude '.DS_Store' \
+            --acl public-read
+    " || {
         echo -e "${RED}❌ R2 sync failed. Static files may not be updated.${NC}"
         echo -e "${YELLOW}⚠️  Continuing deployment anyway...${NC}"
     }

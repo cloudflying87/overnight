@@ -43,9 +43,6 @@ COPY . .
 RUN useradd -m -u 1000 django && chown -R django:django /app
 USER django
 
-# Collect static files (will be overridden by entrypoint in production)
-RUN python manage.py collectstatic --noinput --settings=config.settings.production || true
-
 # Expose port
 EXPOSE 8000
 
