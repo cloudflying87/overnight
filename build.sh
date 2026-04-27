@@ -25,7 +25,7 @@ docker compose down
 
 # 3. Build new Docker images
 echo -e "${YELLOW}🔨 Building Docker images...${NC}"
-docker compose build --no-cache
+docker compose build
 
 # 4. Start containers
 echo -e "${YELLOW}🚀 Starting containers...${NC}"
