@@ -64,24 +64,11 @@ fi
 if [ ! -z "$AWS_ACCESS_KEY_ID" ] && [ ! -z "$AWS_STORAGE_BUCKET_NAME" ]; then
     echo -e "${YELLOW}☁️  Uploading changed static files to R2...${NC}"
 
-    # Install AWS CLI inside container and sync to R2
-    docker compose exec -T web bash -c "
-        pip install --quiet awscli && \
-        aws s3 sync /app/staticfiles/ s3://${AWS_STORAGE_BUCKET_NAME}/static/ \
-            --endpoint-url ${AWS_S3_ENDPOINT_URL} \
-            --region auto \
-            --size-only \
-            --delete \
-            --exclude '*.pyc' \
-            --exclude '__pycache__/*' \
-            --exclude '.DS_Store' \
-            --acl public-read
-    " || {
+    # Use Python script with boto3 (already installed) to sync to R2
+    docker compose exec -T web python sync_to_r2.py || {
         echo -e "${RED}❌ R2 sync failed. Static files may not be updated.${NC}"
         echo -e "${YELLOW}⚠️  Continuing deployment anyway...${NC}"
     }
-
-    echo -e "${GREEN}✅ Static files synced to R2${NC}"
 else
     echo -e "${YELLOW}⚠️  R2 credentials not complete. Skipping R2 sync.${NC}"
 fi
