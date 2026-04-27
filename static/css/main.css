@@ -152,7 +152,11 @@ main {
 
 /* Text colors dark mode */
 [data-theme="dark"] .text-muted {
-    color: var(--text-secondary) !important;
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .card-subtitle {
+    color: #adb5bd !important;
 }
 
 [data-theme="dark"] h1,
