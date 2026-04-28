@@ -57,7 +57,10 @@
                             <p class="mb-0" style="white-space: pre-wrap;">{{ event.notes }}</p>
                             {% endif %}
                         </div>
-                        <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-link">Edit</a>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-link">Edit</a>
+                            <a href="{% url 'care_tracking:nightevent_delete' event.pk %}" class="btn btn-sm btn-link text-danger">Delete</a>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
