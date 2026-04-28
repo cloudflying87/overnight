@@ -110,11 +110,42 @@
         </div>
 
         {% if email_format == 'summary' %}
-            <h2>Summary</h2>
+            <h2>Quick Summary</h2>
             <p>This period included <strong>{{ event_count }}</strong> event(s){% if is_filtered %} of type <strong>{{ event_type_filter }}</strong>{% endif %}.</p>
 
             {% if event_count > 0 %}
-            <p>For detailed information about each event, log in to OvernightApp or request a detailed report.</p>
+            <p>For detailed information about each event, log in to OvernightApp or request a daily/detailed report.</p>
+            {% endif %}
+
+        {% elif email_format == 'daily' %}
+            <h2>Daily Summary</h2>
+            <p>This report shows event counts grouped by day{% if is_filtered %} for <strong>{{ event_type_filter }}</strong>{% endif %}.</p>
+
+            {% if daily_data %}
+                {% for day_data in daily_data %}
+                    {% if day_data.event_count > 0 %}
+                    <div class="event" style="margin-bottom: 15px;">
+                        <div class="event-time">
+                            {{ day_data.date|date:"l, M d, Y" }}
+                        </div>
+                        <p style="margin: 8px 0;">
+                            <strong>Total Events:</strong> {{ day_data.event_count }}
+                        </p>
+                        {% if day_data.event_types %}
+                        <div>
+                            <strong>Event Types:</strong><br>
+                            {% for event_type, count in day_data.event_types.items %}
+                            <span class="badge" style="display: inline-block; background-color: #3498db; color: white; padding: 4px 8px; border-radius: 4px; margin: 2px;">
+                                {{ event_type }}: {{ count }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: #7f8c8d;">No events found for this time period.</p>
             {% endif %}
 
         {% else %}

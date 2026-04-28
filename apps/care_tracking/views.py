@@ -413,7 +413,7 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
         start_date_str: Start date in YYYY-MM-DD format
         end_date_str: End date in YYYY-MM-DD format
         event_type_filter: Optional event type filter
-        email_format: 'summary' or 'detailed'
+        email_format: 'summary' (count only), 'daily' (grouped by day), or 'detailed' (all events)
     """
     import pytz
     from django.core.mail import EmailMultiAlternatives
@@ -459,6 +459,34 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
     # Prepare context
     date_range = f"{start_date.strftime('%b %d')} - {end_date.strftime('%b %d, %Y')}"
 
+    # For daily format, group events by day
+    daily_data = []
+    if email_format == 'daily':
+        from collections import defaultdict
+        events_by_date = defaultdict(list)
+
+        for event in events:
+            event_date = event.event_datetime_local.date()
+            events_by_date[event_date].append(event)
+
+        # Build daily summary
+        current_date = start_date
+        while current_date <= end_date:
+            date_events = events_by_date.get(current_date, [])
+
+            # Count events by type
+            event_type_counts = defaultdict(int)
+            for event in date_events:
+                for option in event.event_options.all():
+                    event_type_counts[option.name] += 1
+
+            daily_data.append({
+                'date': current_date,
+                'event_count': len(date_events),
+                'event_types': dict(event_type_counts),
+            })
+            current_date += timedelta(days=1)
+
     context = {
         'user': user,
         'events': events,
@@ -470,13 +498,21 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
         'event_type_filter': event_type_filter,
         'email_format': email_format,
         'is_filtered': bool(event_type_filter),
+        'daily_data': daily_data,  # For daily format
     }
 
-    # Build subject
+    # Build subject based on format
+    if email_format == 'daily':
+        format_label = 'Daily Summary'
+    elif email_format == 'detailed':
+        format_label = 'Detailed Report'
+    else:  # summary
+        format_label = 'Summary'
+
     if event_type_filter:
-        subject = f'Night Events: {event_type_filter} ({date_range})'
+        subject = f'Night Events {format_label}: {event_type_filter} ({date_range})'
     else:
-        subject = f'Night Events Summary ({date_range})'
+        subject = f'Night Events {format_label} ({date_range})'
 
     # Render email
     html_content = render_to_string('care_tracking/emails/filtered_summary.html', context)
@@ -663,6 +699,70 @@ def trends_view(request):
     peak_hours = sorted(time_blocks, key=lambda x: x['count'], reverse=True)[:3]
     peak_hours = [h for h in peak_hours if h['count'] > 0]  # Only include hours with events
 
+    # Analyze half-hour patterns for more granular view
+    events_by_half_hour = defaultdict(list)
+    event_types_by_half_hour = defaultdict(lambda: defaultdict(int))
+
+    for event in events:
+        event_local = event.event_datetime.astimezone(user_tz)
+        hour = event_local.hour
+        minute = event_local.minute
+
+        # Determine which half hour: 0 = :00-:29, 1 = :30-:59
+        half_hour_index = (hour * 2) + (1 if minute >= 30 else 0)
+
+        events_by_half_hour[half_hour_index].append(event)
+
+        # Count event types for this half hour
+        for option in event.event_options.all():
+            event_types_by_half_hour[half_hour_index][option.name] += 1
+
+    # Create half-hour blocks data
+    half_hour_blocks = []
+    for i in range(48):  # 24 hours * 2 half-hours
+        hour = i // 2
+        is_second_half = i % 2 == 1
+
+        # Format time label
+        if hour == 0:
+            hour_label = "12"
+            period = "AM"
+        elif hour < 12:
+            hour_label = str(hour)
+            period = "AM"
+        elif hour == 12:
+            hour_label = "12"
+            period = "PM"
+        else:
+            hour_label = str(hour - 12)
+            period = "PM"
+
+        if is_second_half:
+            time_label = f"{hour_label}:30 {period}"
+        else:
+            time_label = f"{hour_label}:00 {period}"
+
+        half_hour_events = events_by_half_hour.get(i, [])
+        count = len(half_hour_events)
+
+        # Get top event types for this half hour (up to 3)
+        half_hour_event_types = sorted(
+            event_types_by_half_hour[i].items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:3]
+
+        half_hour_blocks.append({
+            'index': i,
+            'hour': hour,
+            'is_second_half': is_second_half,
+            'label': time_label,
+            'count': count,
+            'percentage': (count / total_events * 100) if total_events > 0 else 0,
+            'events': half_hour_events,
+            'event_types': half_hour_event_types,
+        })
+
     context = {
         'daily_data': daily_data,
         'days': days if not (start_date_str and end_date_str) else '',
@@ -679,6 +779,7 @@ def trends_view(request):
         },
         'top_event_types': top_event_types,
         'time_blocks': time_blocks,
+        'half_hour_blocks': half_hour_blocks,
         'peak_hours': peak_hours,
         'event_type_filter': event_type_filter,
         'all_event_types_for_filter': all_event_types_for_filter,

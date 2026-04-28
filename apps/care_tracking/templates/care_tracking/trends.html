@@ -90,16 +90,28 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
                                 <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
                             </svg>
-                            Email Summary
+                            Quick Summary
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendEmail('daily')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-check" viewBox="0 0 16 16">
+                                <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                            </svg>
+                            Daily Summary
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendEmail('detailed')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope-fill" viewBox="0 0 16 16">
-                                <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
                             </svg>
-                            Email Detailed
+                            Full Details
                         </button>
                     </div>
-                    <p class="small text-muted mb-0">Will send to: {{ user.daily_email_recipients }}</p>
+                    <p class="small text-muted mb-2">
+                        <strong>Quick Summary:</strong> Event count only<br>
+                        <strong>Daily Summary:</strong> Grouped by day with event types<br>
+                        <strong>Full Details:</strong> All events with times and notes
+                    </p>
+                    <p class="small text-muted mb-0"><strong>Recipients:</strong> {{ user.daily_email_recipients }}</p>
                     {% else %}
                     <p class="small text-muted mb-0">Configure email recipients in Settings to enable email sending.</p>
                     {% endif %}
@@ -265,6 +277,39 @@
                 </small>
             </div>
             {% endif %}
+
+            <!-- Half-Hour Breakdown -->
+            {% if half_hour_blocks %}
+            <hr class="my-4">
+            <h6 class="mb-3">30-Minute Breakdown <small class="text-muted">(click to view details)</small></h6>
+            <div class="row">
+                {% for block in half_hour_blocks %}
+                    {% if block.count > 0 %}
+                    <div class="col-6 col-md-3 col-lg-2 mb-2">
+                        <div class="text-center p-2 border rounded {% if block.count > 3 %}bg-primary bg-opacity-10{% elif block.count > 1 %}bg-info bg-opacity-10{% endif %} cursor-pointer"
+                             style="cursor: pointer;"
+                             data-bs-toggle="modal"
+                             data-bs-target="#halfHourModal{{ block.index }}">
+                            <div class="small text-muted" style="font-size: 11px;">{{ block.label }}</div>
+                            <div class="fw-bold">{{ block.count }}</div>
+                            {% if block.event_types %}
+                            <div class="mt-1">
+                                {% for event_type, type_count in block.event_types %}
+                                <span class="badge bg-secondary" style="font-size: 8px;">{{ event_type }} ({{ type_count }})</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    More granular view showing 30-minute intervals. Click any block to see event details.
+                </small>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}
@@ -332,6 +377,63 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="hourModalLabel{{ block.hour }}">
+                            Events at {{ block.label }} ({{ block.count }} total)
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Event Type Summary -->
+                        {% if block.event_types %}
+                        <div class="mb-3">
+                            <h6>Event Type Summary:</h6>
+                            {% for event_type, type_count in block.event_types %}
+                            <span class="badge bg-primary me-2">{{ event_type }}: {{ type_count }}</span>
+                            {% endfor %}
+                        </div>
+                        <hr>
+                        {% endif %}
+
+                        <!-- Detailed Event List -->
+                        <div class="list-group">
+                            {% for event in block.events %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ event.event_datetime_local|date:"M d, Y - g:i A" }}</h6>
+                                        <div class="mb-2">
+                                            {% for option in event.event_options.all %}
+                                            <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        {% if event.notes %}
+                                        <p class="mb-0 text-muted" style="white-space: pre-wrap;">{{ event.notes }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    <!-- Modals for half-hour breakdown details -->
+    {% for block in half_hour_blocks %}
+        {% if block.count > 0 %}
+        <div class="modal fade" id="halfHourModal{{ block.index }}" tabindex="-1" aria-labelledby="halfHourModalLabel{{ block.index }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="halfHourModalLabel{{ block.index }}">
                             Events at {{ block.label }} ({{ block.count }} total)
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
