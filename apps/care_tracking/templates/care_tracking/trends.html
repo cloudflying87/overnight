@@ -342,27 +342,20 @@
                     </thead>
                     <tbody>
                         {% for day in daily_data %}
+                        {% if day.event_count > 0 %}
                         <tr>
                             <td>
                                 <a href="{% url 'care_tracking:day_view' day.date.year day.date.month day.date.day %}">
-                                    {{ day.date|date:"D, M d" }} – {{ day.night_end|date:"M d, Y" }}
+                                    {{ day.date|date:"D, M d, Y" }}
                                 </a>
                             </td>
                             <td class="text-center">
-                                {% if day.event_count > 0 %}
-                                    <span class="badge bg-primary">{{ day.event_count }}</span>
-                                {% else %}
-                                    <span class="text-muted">0</span>
-                                {% endif %}
+                                <span class="badge bg-primary">{{ day.event_count }}</span>
                             </td>
                             <td>
-                                {% if day.event_types %}
-                                    {% for event_type, count in day.event_types.items %}
-                                        <small class="me-2">{{ event_type }} ({{ count }})</small>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-muted small">No events</span>
-                                {% endif %}
+                                {% for event_type, count in day.event_types.items %}
+                                    <small class="me-2">{{ event_type }} ({{ count }})</small>
+                                {% endfor %}
                             </td>
                             <td class="text-center">
                                 {% if day.has_note %}
@@ -372,6 +365,7 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
