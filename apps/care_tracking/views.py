@@ -285,8 +285,15 @@ class DayNoteDeleteView(LoginRequiredMixin, UserOwnsObjectMixin, DeleteView):
 @login_required
 def calendar_view(request):
     """Calendar view showing which days have events"""
+    import pytz
+    from datetime import datetime
+
     # Get year and month from query params, default to current
-    today = timezone.now().date()
+    user_tz = pytz.timezone(request.user.timezone)
+    now_utc = timezone.now()
+    now_local = now_utc.astimezone(user_tz)
+    today = now_local.date()
+
     year = int(request.GET.get('year', today.year))
     month = int(request.GET.get('month', today.month))
 
@@ -301,13 +308,55 @@ def calendar_view(request):
     else:
         month_end = date(year, month + 1, 1)
 
-    # Get dates with night events (as day numbers)
-    event_dates_raw = NightEvent.objects.filter(
-        user=request.user,
-        event_datetime__date__gte=month_start,
-        event_datetime__date__lt=month_end
-    ).values_list('event_datetime__date', flat=True)
-    event_days = set(d.day for d in event_dates_raw)
+    # Get dates with night events
+    if request.user.group_night_events:
+        # When grouping by night, map events to their night start date
+        # A night starts at 8 PM and ends at 8 AM next day
+        # Events before 8 AM belong to previous day's night
+        events = NightEvent.objects.filter(
+            user=request.user,
+            event_datetime__date__gte=month_start - timedelta(days=1),  # Include previous day for early AM events
+            event_datetime__date__lt=month_end
+        ).select_related('user')
+
+        event_days = set()
+        for event in events:
+            event_local = event.event_datetime.astimezone(user_tz)
+            event_hour = event_local.hour
+            event_date = event_local.date()
+
+            # Determine which date to show this event on
+            if event_hour < 8:
+                # Before 8 AM - belongs to previous day's night
+                display_date = event_date - timedelta(days=1)
+            elif event_hour >= 20:
+                # 8 PM or later - belongs to today's night
+                display_date = event_date
+            else:
+                # 8 AM to 7:59 PM - daytime event, show on regular date
+                display_date = event_date
+
+            # Only show nights that have started
+            # If it's today and we haven't reached 8 PM yet, don't show today's night
+            # (but do show daytime events for today)
+            if display_date == today:
+                if event_hour >= 20 or event_hour < 8:
+                    # This is a night event
+                    if now_local.hour < 20:
+                        # Night hasn't started yet
+                        continue
+
+            # Only include days in current month
+            if month_start <= display_date < month_end:
+                event_days.add(display_date.day)
+    else:
+        # Regular calendar view - show events by their date
+        event_dates_raw = NightEvent.objects.filter(
+            user=request.user,
+            event_datetime__date__gte=month_start,
+            event_datetime__date__lt=month_end
+        ).values_list('event_datetime__date', flat=True)
+        event_days = set(d.day for d in event_dates_raw)
 
     # Get dates with day notes (as day numbers)
     note_dates_raw = DayNote.objects.filter(
@@ -361,8 +410,9 @@ def day_view(request, year, month, day):
     # Check if user wants to group by night (8pm-8am)
     if request.user.group_night_events:
         # Night starts at 8pm on selected_date and ends at 8am next day
-        night_start = user_tz.localize(datetime.combine(selected_date, datetime.min.time().replace(hour=20)))
+        night_start = user_tz.localize(datetime.combine(selected_date, datetime.min.time().replace(hour=20, minute=0, second=0)))
         night_end = night_start + timedelta(hours=12)  # 8am next day
+        next_date = selected_date + timedelta(days=1)
 
         # Convert to UTC for database query
         night_start_utc = night_start.astimezone(pytz.UTC)
@@ -374,7 +424,11 @@ def day_view(request, year, month, day):
             event_datetime__lt=night_end_utc
         ).prefetch_related('event_options').order_by('event_datetime')
 
-        date_range_label = f"{selected_date.strftime('%b %d, %Y')} Night (8 PM - 8 AM)"
+        # Show date range spanning both days
+        if selected_date.month == next_date.month:
+            date_range_label = f"Night of {selected_date.strftime('%b %d')}-{next_date.strftime('%d, %Y')} (8 PM - 8 AM)"
+        else:
+            date_range_label = f"Night of {selected_date.strftime('%b %d')} - {next_date.strftime('%b %d, %Y')} (8 PM - 8 AM)"
     else:
         # Regular calendar day view
         events = NightEvent.objects.filter(
