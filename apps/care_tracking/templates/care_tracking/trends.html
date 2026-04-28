@@ -11,18 +11,43 @@
         </div>
     </div>
 
-    <!-- Time Range Selector -->
+    <!-- Time Range Selector and Export -->
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">Time Range</h5>
-            <div class="btn-group" role="group">
-                <a href="?days=7" class="btn btn-sm {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 7 Days</a>
-                <a href="?days=14" class="btn btn-sm {% if days == 14 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 14 Days</a>
-                <a href="?days=30" class="btn btn-sm {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 30 Days</a>
-                <a href="?days=60" class="btn btn-sm {% if days == 60 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 60 Days</a>
-                <a href="?days=90" class="btn btn-sm {% if days == 90 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 90 Days</a>
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0">Filters & Export</h5>
+                <a href="{% url 'care_tracking:export_events_csv' %}?days={{ days }}{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm btn-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                    Export to CSV
+                </a>
             </div>
-            <p class="small text-muted mt-2 mb-0">Showing {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}</p>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="eventTypeFilter" class="form-label small">Filter by Event Type</label>
+                    <select id="eventTypeFilter" class="form-select form-select-sm" onchange="window.location.href='?days={{ days }}&event_type=' + this.value">
+                        <option value="">All Event Types</option>
+                        {% for event_type in all_event_types_for_filter %}
+                        <option value="{{ event_type }}" {% if event_type == event_type_filter %}selected{% endif %}>{{ event_type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group" role="group">
+                <a href="?days=7{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 7 Days</a>
+                <a href="?days=14{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 14 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 14 Days</a>
+                <a href="?days=30{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 30 Days</a>
+                <a href="?days=60{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 60 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 60 Days</a>
+                <a href="?days=90{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 90 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 90 Days</a>
+            </div>
+            <p class="small text-muted mt-2 mb-0">
+                Showing {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
+                {% if event_type_filter %}<span class="badge bg-info">Filtered: {{ event_type_filter }}</span>{% endif %}
+            </p>
         </div>
     </div>
 

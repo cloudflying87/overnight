@@ -410,24 +410,35 @@ def trends_view(request):
     import pytz
     from collections import defaultdict
     
-    # Get date range from query params (default to last 30 days)
+    # Get filter params from query
     days = int(request.GET.get('days', 30))
-    
+    event_type_filter = request.GET.get('event_type', '')
+
     # Get user's timezone
     user_tz = pytz.timezone(request.user.timezone)
     now_utc = timezone.now()
     now_local = now_utc.astimezone(user_tz)
-    
+
     # Calculate date range
     end_date = now_local.date()
     start_date = end_date - timedelta(days=days - 1)
-    
+
     # Get all events in date range
     events = NightEvent.objects.filter(
         user=request.user,
         event_datetime__date__gte=start_date,
         event_datetime__date__lte=end_date
     ).prefetch_related('event_options')
+
+    # Apply event type filter if specified
+    if event_type_filter:
+        events = events.filter(event_options__name=event_type_filter).distinct()
+
+    # Get all unique event types for filter dropdown
+    all_event_types_for_filter = EventOption.objects.filter(
+        user=request.user,
+        is_active=True
+    ).order_by('name').values_list('name', flat=True)
     
     # Group events by date (in user's timezone)
     events_by_date = defaultdict(list)
@@ -523,6 +534,60 @@ def trends_view(request):
         'top_event_types': top_event_types,
         'time_blocks': time_blocks,
         'peak_hours': peak_hours,
+        'event_type_filter': event_type_filter,
+        'all_event_types_for_filter': all_event_types_for_filter,
     }
     
     return render(request, 'care_tracking/trends.html', context)
+
+
+@login_required
+def export_events_csv(request):
+    """Export events to CSV format"""
+    import csv
+    from django.http import HttpResponse
+    import pytz
+
+    # Get filters from query params
+    days = int(request.GET.get('days', 30))
+    event_type_filter = request.GET.get('event_type', '')
+
+    # Get user's timezone
+    user_tz = pytz.timezone(request.user.timezone)
+    now_utc = timezone.now()
+    now_local = now_utc.astimezone(user_tz)
+
+    # Calculate date range
+    end_date = now_local.date()
+    start_date = end_date - timedelta(days=days - 1)
+
+    # Query events
+    events = NightEvent.objects.filter(
+        user=request.user,
+        event_datetime__date__gte=start_date,
+        event_datetime__date__lte=end_date
+    ).prefetch_related('event_options').order_by('-event_datetime')
+
+    # Filter by event type if specified
+    if event_type_filter:
+        events = events.filter(event_options__name=event_type_filter)
+
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="night_events_{start_date}_{end_date}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Time', 'Event Types', 'Notes'])
+
+    for event in events:
+        event_local = event.event_datetime.astimezone(user_tz)
+        event_types = ', '.join([opt.name for opt in event.event_options.all()])
+
+        writer.writerow([
+            event_local.strftime('%Y-%m-%d'),
+            event_local.strftime('%I:%M %p'),
+            event_types,
+            event.notes or ''
+        ])
+
+    return response

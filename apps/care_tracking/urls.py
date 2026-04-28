@@ -31,4 +31,5 @@ urlpatterns = [
 
     # Trends / Analytics
     path('trends/', views.trends_view, name='trends'),
+    path('trends/export/', views.export_events_csv, name='export_events_csv'),
 ]
