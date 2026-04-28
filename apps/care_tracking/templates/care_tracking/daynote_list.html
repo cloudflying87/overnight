@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load tz_filters %}
 
 {% block title %}Day Notes - OvernightApp{% endblock %}
 
@@ -31,7 +32,7 @@
                             <h5 class="card-title">{{ note.date|date:"l, F d, Y" }}</h5>
                             <p class="card-text">{{ note.content }}</p>
                             <p class="text-muted small mb-0">
-                                Last updated: {{ note.updated_at|date:"M d, Y g:i A" }}
+                                Last updated: {{ note.updated_at|user_timezone:user|date:"M d, Y g:i A" }}
                             </p>
                         </div>
                         <div class="btn-group ms-3">
