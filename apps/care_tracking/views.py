@@ -614,16 +614,25 @@ def trends_view(request):
     top_event_types = sorted(all_event_types.items(), key=lambda x: x[1], reverse=True)[:5]
 
     # Analyze time of day patterns
-    events_by_hour = defaultdict(int)
+    events_by_hour = defaultdict(list)  # Store actual events, not just counts
+    event_types_by_hour = defaultdict(lambda: defaultdict(int))  # Track event types per hour
+
     for event in events:
         event_local = event.event_datetime.astimezone(user_tz)
         hour = event_local.hour
-        events_by_hour[hour] += 1
+        event.event_datetime_local = event_local  # Store for template use
+        events_by_hour[hour].append(event)
+
+        # Count event types for this hour
+        for option in event.event_options.all():
+            event_types_by_hour[hour][option.name] += 1
 
     # Create time blocks data (hourly breakdown)
     time_blocks = []
     for hour in range(24):
-        count = events_by_hour.get(hour, 0)
+        hour_events = events_by_hour.get(hour, [])
+        count = len(hour_events)
+
         # Format hour for display
         if hour == 0:
             time_label = "12 AM"
@@ -634,11 +643,20 @@ def trends_view(request):
         else:
             time_label = f"{hour - 12} PM"
 
+        # Get top event types for this hour (up to 3)
+        hour_event_types = sorted(
+            event_types_by_hour[hour].items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:3]
+
         time_blocks.append({
             'hour': hour,
             'label': time_label,
             'count': count,
-            'percentage': (count / total_events * 100) if total_events > 0 else 0
+            'percentage': (count / total_events * 100) if total_events > 0 else 0,
+            'events': hour_events,
+            'event_types': hour_event_types,  # [(type_name, count), ...]
         })
 
     # Find peak hours (top 3)

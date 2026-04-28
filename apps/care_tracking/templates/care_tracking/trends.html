@@ -230,14 +230,24 @@
                 {% endfor %}
             </div>
 
-            <h6 class="mb-3">Hourly Breakdown</h6>
+            <h6 class="mb-3">Hourly Breakdown <small class="text-muted">(click to view details)</small></h6>
             <div class="row">
                 {% for block in time_blocks %}
                     {% if block.count > 0 %}
                     <div class="col-6 col-md-3 col-lg-2 mb-2">
-                        <div class="text-center p-2 border rounded {% if block.count > 5 %}bg-primary bg-opacity-10{% elif block.count > 2 %}bg-info bg-opacity-10{% endif %}">
+                        <div class="text-center p-2 border rounded {% if block.count > 5 %}bg-primary bg-opacity-10{% elif block.count > 2 %}bg-info bg-opacity-10{% endif %} cursor-pointer"
+                             style="cursor: pointer;"
+                             data-bs-toggle="modal"
+                             data-bs-target="#hourModal{{ block.hour }}">
                             <div class="small text-muted">{{ block.label }}</div>
                             <div class="fw-bold">{{ block.count }}</div>
+                            {% if block.event_types %}
+                            <div class="mt-1">
+                                {% for event_type, type_count in block.event_types %}
+                                <span class="badge bg-secondary" style="font-size: 9px;">{{ event_type }} ({{ type_count }})</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -250,6 +260,8 @@
                     <strong>Color key:</strong>
                     <span class="badge bg-primary bg-opacity-25">Darker = More events (6+)</span>
                     <span class="badge bg-info bg-opacity-25">Lighter = Moderate (3-5)</span>
+                    <br>
+                    Click any time block to see detailed event list.
                 </small>
             </div>
             {% endif %}
@@ -311,5 +323,62 @@
             </div>
         </div>
     </div>
+
+    <!-- Modals for hourly breakdown details -->
+    {% for block in time_blocks %}
+        {% if block.count > 0 %}
+        <div class="modal fade" id="hourModal{{ block.hour }}" tabindex="-1" aria-labelledby="hourModalLabel{{ block.hour }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="hourModalLabel{{ block.hour }}">
+                            Events at {{ block.label }} ({{ block.count }} total)
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Event Type Summary -->
+                        {% if block.event_types %}
+                        <div class="mb-3">
+                            <h6>Event Type Summary:</h6>
+                            {% for event_type, type_count in block.event_types %}
+                            <span class="badge bg-primary me-2">{{ event_type }}: {{ type_count }}</span>
+                            {% endfor %}
+                        </div>
+                        <hr>
+                        {% endif %}
+
+                        <!-- Detailed Event List -->
+                        <div class="list-group">
+                            {% for event in block.events %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ event.event_datetime_local|date:"M d, Y - g:i A" }}</h6>
+                                        <div class="mb-2">
+                                            {% for option in event.event_options.all %}
+                                            <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        {% if event.notes %}
+                                        <p class="mb-0 text-muted" style="white-space: pre-wrap;">{{ event.notes }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
 </div>
 {% endblock %}
