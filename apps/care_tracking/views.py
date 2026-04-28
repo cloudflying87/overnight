@@ -448,7 +448,39 @@ def trends_view(request):
     
     # Sort by count descending
     top_event_types = sorted(all_event_types.items(), key=lambda x: x[1], reverse=True)[:5]
-    
+
+    # Analyze time of day patterns
+    events_by_hour = defaultdict(int)
+    for event in events:
+        event_local = event.event_datetime.astimezone(user_tz)
+        hour = event_local.hour
+        events_by_hour[hour] += 1
+
+    # Create time blocks data (hourly breakdown)
+    time_blocks = []
+    for hour in range(24):
+        count = events_by_hour.get(hour, 0)
+        # Format hour for display
+        if hour == 0:
+            time_label = "12 AM"
+        elif hour < 12:
+            time_label = f"{hour} AM"
+        elif hour == 12:
+            time_label = "12 PM"
+        else:
+            time_label = f"{hour - 12} PM"
+
+        time_blocks.append({
+            'hour': hour,
+            'label': time_label,
+            'count': count,
+            'percentage': (count / total_events * 100) if total_events > 0 else 0
+        })
+
+    # Find peak hours (top 3)
+    peak_hours = sorted(time_blocks, key=lambda x: x['count'], reverse=True)[:3]
+    peak_hours = [h for h in peak_hours if h['count'] > 0]  # Only include hours with events
+
     context = {
         'daily_data': daily_data,
         'days': days,
@@ -462,6 +494,8 @@ def trends_view(request):
             'max_events_in_night': max_events_in_night,
         },
         'top_event_types': top_event_types,
+        'time_blocks': time_blocks,
+        'peak_hours': peak_hours,
     }
     
     return render(request, 'care_tracking/trends.html', context)
