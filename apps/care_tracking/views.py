@@ -656,33 +656,36 @@ def trends_view(request):
         is_active=True
     ).order_by('name').values_list('name', flat=True)
     
-    # Group events by date (in user's timezone)
-    events_by_date = defaultdict(list)
+    # Group events by night (night starts at 10 PM; events before 8 AM belong to previous evening)
+    events_by_night = defaultdict(list)
     for event in events:
         event_local = event.event_datetime.astimezone(user_tz)
+        hour = event_local.hour
         event_date = event_local.date()
-        events_by_date[event_date].append(event)
-    
-    # Build daily summary data
+        night_start = event_date - timedelta(days=1) if hour < 8 else event_date
+        events_by_night[night_start].append(event)
+
+    # Build nightly summary data
     daily_data = []
     for i in range(days):
-        current_date = start_date + timedelta(days=i)
-        date_events = events_by_date.get(current_date, [])
-        
-        # Count events by type
+        night_start = start_date + timedelta(days=i)
+        night_end = night_start + timedelta(days=1)
+        night_events = events_by_night.get(night_start, [])
+
         event_type_counts = defaultdict(int)
-        for event in date_events:
+        for event in night_events:
             for option in event.event_options.all():
                 event_type_counts[option.name] += 1
-        
+
         daily_data.append({
-            'date': current_date,
-            'event_count': len(date_events),
-            'events': date_events,
+            'date': night_start,
+            'night_end': night_end,
+            'event_count': len(night_events),
+            'events': night_events,
             'event_types': dict(event_type_counts),
-            'has_note': DayNote.objects.filter(user=request.user, date=current_date).exists(),
+            'has_note': DayNote.objects.filter(user=request.user, date=night_start).exists(),
         })
-    
+
     # Reverse so newest is first
     daily_data.reverse()
     
