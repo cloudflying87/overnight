@@ -232,11 +232,12 @@
             <div class="row mb-4">
                 {% for peak in peak_hours %}
                 <div class="col-md-4 mb-2">
-                    <div class="alert alert-info alert-permanent mb-0">
-                        <strong>{{ peak.label }}</strong>
-                        <br>
-                        <span class="h4">{{ peak.count }}</span> events
-                        <small class="text-muted">({{ peak.percentage|floatformat:1 }}%)</small>
+                    <div class="card text-center h-100">
+                        <div class="card-body py-3">
+                            <div class="text-muted small mb-1">{{ peak.label }}</div>
+                            <div class="h3 mb-0">{{ peak.count }}</div>
+                            <div class="text-muted small">events ({{ peak.percentage|floatformat:1 }}%)</div>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
