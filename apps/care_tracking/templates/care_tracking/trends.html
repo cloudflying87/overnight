@@ -11,24 +11,17 @@
         </div>
     </div>
 
-    <!-- Time Range Selector and Export -->
+    <!-- Filters, Export & Email -->
     <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Filters & Actions</h5>
+        </div>
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <h5 class="card-title mb-0">Filters & Export</h5>
-                <a href="{% url 'care_tracking:export_events_csv' %}?days={{ days }}{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm btn-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
-                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                    </svg>
-                    Export to CSV
-                </a>
-            </div>
-
+            <!-- Event Type Filter -->
             <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="eventTypeFilter" class="form-label small">Filter by Event Type</label>
-                    <select id="eventTypeFilter" class="form-select form-select-sm" onchange="window.location.href='?days={{ days }}&event_type=' + this.value">
+                <div class="col-md-6">
+                    <label for="eventTypeFilter" class="form-label">Filter by Event Type</label>
+                    <select id="eventTypeFilter" class="form-select" onchange="applyFilter()">
                         <option value="">All Event Types</option>
                         {% for event_type in all_event_types_for_filter %}
                         <option value="{{ event_type }}" {% if event_type == event_type_filter %}selected{% endif %}>{{ event_type }}</option>
@@ -37,19 +30,128 @@
                 </div>
             </div>
 
-            <div class="btn-group" role="group">
-                <a href="?days=7{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 7 Days</a>
-                <a href="?days=14{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 14 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 14 Days</a>
-                <a href="?days=30{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 30 Days</a>
-                <a href="?days=60{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 60 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 60 Days</a>
-                <a href="?days=90{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 90 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 90 Days</a>
+            <!-- Date Range Selection -->
+            <div class="mb-3">
+                <label class="form-label">Date Range</label>
+                <div class="btn-group d-block mb-2" role="group">
+                    <a href="?days=3{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 3 and not is_custom_range %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 3 Days</a>
+                    <a href="?days=7{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 7 and not is_custom_range %}btn-primary{% else %}btn-outline-primary{% endif %}">Last Week</a>
+                    <a href="?days=14{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 14 and not is_custom_range %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 14 Days</a>
+                    <a href="?days=30{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 30 and not is_custom_range %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 30 Days</a>
+                    <a href="?days=60{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 60 and not is_custom_range %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 60 Days</a>
+                    <a href="?days=90{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm {% if days == 90 and not is_custom_range %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 90 Days</a>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="customStartDate" class="form-label small">Custom Start Date</label>
+                        <input type="date" id="customStartDate" class="form-control form-control-sm" value="{{ start_date_str }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="customEndDate" class="form-label small">Custom End Date</label>
+                        <input type="date" id="customEndDate" class="form-control form-control-sm" value="{{ end_date_str }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button onclick="applyCustomRange()" class="btn btn-sm btn-outline-primary">Apply</button>
+                    </div>
+                </div>
             </div>
-            <p class="small text-muted mt-2 mb-0">
-                Showing {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
-                {% if event_type_filter %}<span class="badge bg-info">Filtered: {{ event_type_filter }}</span>{% endif %}
+
+            <p class="small text-muted mb-3">
+                <strong>Currently showing:</strong> {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
+                {% if event_type_filter %}<span class="badge bg-info ms-2">{{ event_type_filter }}</span>{% endif %}
             </p>
+
+            <hr>
+
+            <!-- Actions -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="mb-2">Export & Share</h6>
+                    <div class="btn-group me-2 mb-2" role="group">
+                        <a href="{% url 'care_tracking:export_events_csv' %}?start_date={{ start_date_str }}&end_date={{ end_date_str }}{% if event_type_filter %}&event_type={{ event_type_filter }}{% endif %}" class="btn btn-sm btn-success">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                            </svg>
+                            Download CSV
+                        </a>
+                    </div>
+
+                    {% if user.daily_email_recipients %}
+                    <div class="btn-group mb-2" role="group">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="sendEmail('summary')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
+                                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                            </svg>
+                            Email Summary
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="sendEmail('detailed')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope-fill" viewBox="0 0 16 16">
+                                <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/>
+                            </svg>
+                            Email Detailed
+                        </button>
+                    </div>
+                    <p class="small text-muted mb-0">Will send to: {{ user.daily_email_recipients }}</p>
+                    {% else %}
+                    <p class="small text-muted mb-0">Configure email recipients in Settings to enable email sending.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Hidden form for email sending -->
+    <form id="emailForm" method="post" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="send_email" value="1">
+        <input type="hidden" name="start_date" id="emailStartDate" value="{{ start_date_str }}">
+        <input type="hidden" name="end_date" id="emailEndDate" value="{{ end_date_str }}">
+        <input type="hidden" name="event_type" id="emailEventType" value="{{ event_type_filter }}">
+        <input type="hidden" name="email_format" id="emailFormat" value="">
+    </form>
+
+    <script>
+    function applyFilter() {
+        const eventType = document.getElementById('eventTypeFilter').value;
+        const startDate = document.getElementById('customStartDate').value;
+        const endDate = document.getElementById('customEndDate').value;
+
+        let url = '?';
+        if (startDate && endDate) {
+            url += `start_date=${startDate}&end_date=${endDate}`;
+        } else {
+            url += 'days={{ days }}';
+        }
+        if (eventType) {
+            url += `&event_type=${eventType}`;
+        }
+        window.location.href = url;
+    }
+
+    function applyCustomRange() {
+        const startDate = document.getElementById('customStartDate').value;
+        const endDate = document.getElementById('customEndDate').value;
+        const eventType = document.getElementById('eventTypeFilter').value;
+
+        if (!startDate || !endDate) {
+            alert('Please select both start and end dates');
+            return;
+        }
+
+        let url = `?start_date=${startDate}&end_date=${endDate}`;
+        if (eventType) {
+            url += `&event_type=${eventType}`;
+        }
+        window.location.href = url;
+    }
+
+    function sendEmail(format) {
+        document.getElementById('emailFormat').value = format;
+        document.getElementById('emailForm').submit();
+    }
+    </script>
 
     <!-- Statistics Cards -->
     <div class="row mb-4">

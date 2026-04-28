@@ -404,24 +404,150 @@ def day_view(request, year, month, day):
 # TRENDS / ANALYTICS
 # ============================================================================
 
+def send_filtered_email(user, start_date_str, end_date_str, event_type_filter='', email_format='summary'):
+    """
+    Send filtered email with events from trends page
+
+    Args:
+        user: User object
+        start_date_str: Start date in YYYY-MM-DD format
+        end_date_str: End date in YYYY-MM-DD format
+        event_type_filter: Optional event type filter
+        email_format: 'summary' or 'detailed'
+    """
+    import pytz
+    from django.core.mail import EmailMultiAlternatives
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+    from datetime import datetime
+
+    # Check if user has email recipients
+    if not user.daily_email_recipients.strip():
+        raise ValueError('No email recipients configured. Please add recipients in settings.')
+
+    # Parse date strings
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+    end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+    # Get user's timezone
+    user_tz = pytz.timezone(user.timezone)
+
+    # Query events
+    events = list(NightEvent.objects.filter(
+        user=user,
+        event_datetime__date__gte=start_date,
+        event_datetime__date__lte=end_date
+    ).prefetch_related('event_options').order_by('-event_datetime'))
+
+    # Apply event type filter if specified
+    if event_type_filter:
+        events = [e for e in events if any(opt.name == event_type_filter for opt in e.event_options.all())]
+
+    # Convert event times to user's timezone
+    for event in events:
+        if event.event_datetime:
+            event.event_datetime_local = event.event_datetime.astimezone(user_tz)
+        else:
+            event.event_datetime_local = None
+
+    # Parse recipients
+    recipients = [email.strip() for email in user.daily_email_recipients.split(',') if email.strip()]
+
+    if not recipients:
+        raise ValueError('No valid email recipients found.')
+
+    # Prepare context
+    date_range = f"{start_date.strftime('%b %d')} - {end_date.strftime('%b %d, %Y')}"
+
+    context = {
+        'user': user,
+        'events': events,
+        'event_count': len(events),
+        'user_tz': user_tz,
+        'start_date': start_date,
+        'end_date': end_date,
+        'date_range': date_range,
+        'event_type_filter': event_type_filter,
+        'email_format': email_format,
+        'is_filtered': bool(event_type_filter),
+    }
+
+    # Build subject
+    if event_type_filter:
+        subject = f'Night Events: {event_type_filter} ({date_range})'
+    else:
+        subject = f'Night Events Summary ({date_range})'
+
+    # Render email
+    html_content = render_to_string('care_tracking/emails/filtered_summary.html', context)
+    text_content = strip_tags(html_content)
+
+    # Create and send email
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        from_email=None,
+        to=recipients,
+    )
+    email.attach_alternative(html_content, "text/html")
+    email.send()
+
+
 @login_required
 def trends_view(request):
     """View trends and analytics for night events"""
     import pytz
     from collections import defaultdict
-    
+    from django.core.mail import EmailMultiAlternatives
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+    from datetime import datetime
+
+    # Handle email sending action
+    if request.method == 'POST' and 'send_email' in request.POST:
+        email_format = request.POST.get('email_format', 'summary')
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+        event_type_filter = request.POST.get('event_type', '')
+
+        try:
+            from apps.users.views import send_manual_email
+            # Use a modified version that accepts date range and filter
+            send_filtered_email(request.user, start_date_str, end_date_str, event_type_filter, email_format)
+            messages.success(request, f'Email sent successfully with {email_format} format!')
+        except Exception as e:
+            messages.error(request, f'Error sending email: {str(e)}')
+
+        # Redirect to same page with filters preserved
+        return redirect(f"{request.path}?start_date={start_date_str}&end_date={end_date_str}&event_type={event_type_filter}")
+
     # Get filter params from query
-    days = int(request.GET.get('days', 30))
+    days = request.GET.get('days', '')
     event_type_filter = request.GET.get('event_type', '')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
 
     # Get user's timezone
     user_tz = pytz.timezone(request.user.timezone)
     now_utc = timezone.now()
     now_local = now_utc.astimezone(user_tz)
 
-    # Calculate date range
-    end_date = now_local.date()
-    start_date = end_date - timedelta(days=days - 1)
+    # Calculate date range based on input
+    if start_date_str and end_date_str:
+        # Custom date range
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        days = (end_date - start_date).days + 1
+    elif days:
+        # Preset days
+        days = int(days)
+        end_date = now_local.date()
+        start_date = end_date - timedelta(days=days - 1)
+    else:
+        # Default to 30 days
+        days = 30
+        end_date = now_local.date()
+        start_date = end_date - timedelta(days=days - 1)
 
     # Get all events in date range
     events = NightEvent.objects.filter(
@@ -521,9 +647,11 @@ def trends_view(request):
 
     context = {
         'daily_data': daily_data,
-        'days': days,
+        'days': days if not (start_date_str and end_date_str) else '',
         'start_date': start_date,
         'end_date': end_date,
+        'start_date_str': start_date.strftime('%Y-%m-%d'),
+        'end_date_str': end_date.strftime('%Y-%m-%d'),
         'stats': {
             'total_events': total_events,
             'days_with_events': days_with_events,
@@ -536,6 +664,7 @@ def trends_view(request):
         'peak_hours': peak_hours,
         'event_type_filter': event_type_filter,
         'all_event_types_for_filter': all_event_types_for_filter,
+        'is_custom_range': bool(start_date_str and end_date_str),
     }
     
     return render(request, 'care_tracking/trends.html', context)
@@ -547,19 +676,28 @@ def export_events_csv(request):
     import csv
     from django.http import HttpResponse
     import pytz
+    from datetime import datetime
 
     # Get filters from query params
-    days = int(request.GET.get('days', 30))
     event_type_filter = request.GET.get('event_type', '')
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
 
     # Get user's timezone
     user_tz = pytz.timezone(request.user.timezone)
     now_utc = timezone.now()
     now_local = now_utc.astimezone(user_tz)
 
-    # Calculate date range
-    end_date = now_local.date()
-    start_date = end_date - timedelta(days=days - 1)
+    # Calculate date range based on input
+    if start_date_str and end_date_str:
+        # Custom date range
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    else:
+        # Default to 30 days
+        days = int(request.GET.get('days', 30))
+        end_date = now_local.date()
+        start_date = end_date - timedelta(days=days - 1)
 
     # Query events
     events = NightEvent.objects.filter(
