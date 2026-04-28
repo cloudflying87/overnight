@@ -196,6 +196,11 @@ main {
     background-color: var(--bg-secondary);
 }
 
+[data-theme="dark"] .table tbody td {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
 [data-theme="dark"] .table-bordered {
     border-color: var(--border-color);
 }
@@ -203,6 +208,20 @@ main {
 [data-theme="dark"] .table-bordered td,
 [data-theme="dark"] .table-bordered th {
     border-color: var(--border-color);
+    background-color: var(--card-bg);
+}
+
+/* Calendar specific dark mode */
+[data-theme="dark"] .calendar-table {
+    background-color: var(--card-bg);
+}
+
+[data-theme="dark"] .calendar-day {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .calendar-day.empty {
+    background-color: var(--bg-secondary) !important;
 }
 
 /* Dropdown menu dark mode */
