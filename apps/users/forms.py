@@ -135,7 +135,7 @@ class SettingsForm(forms.ModelForm):
         }
         help_texts = {
             'timezone': 'All times will be displayed in your timezone',
-            'group_night_events': 'Show events from 8 PM to 8 AM grouped together on the starting day',
+            'group_night_events': 'Show events from 5 PM to 10 AM grouped together on the starting day',
             'daily_email_time': 'Time to send daily summary (in your timezone)',
             'daily_email_recipients': 'Comma-separated list of email addresses to receive daily summaries',
         }

@@ -19,7 +19,7 @@ class User(AbstractUser):
     # Display preferences
     group_night_events = models.BooleanField(
         default=False,
-        help_text='Group events by night (8 PM - 8 AM) instead of calendar day'
+        help_text='Group events by night (5 PM - 10 AM) instead of calendar day'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
