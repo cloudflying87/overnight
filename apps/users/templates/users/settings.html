@@ -27,6 +27,19 @@
                             {% endif %}
                             <small class="form-text text-muted">{{ form.timezone.help_text }}</small>
                         </div>
+
+                        <div class="mb-0 form-check">
+                            {{ form.group_night_events }}
+                            <label class="form-check-label" for="{{ form.group_night_events.id_for_label }}">
+                                {{ form.group_night_events.label }}
+                            </label>
+                            {% if form.group_night_events.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.group_night_events.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted d-block">{{ form.group_night_events.help_text }}</small>
+                        </div>
                     </div>
                 </div>
 

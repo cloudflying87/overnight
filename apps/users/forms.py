@@ -111,12 +111,13 @@ class SettingsForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('timezone', 'daily_email_enabled', 'daily_email_time', 'daily_email_recipients')
+        fields = ('timezone', 'group_night_events', 'daily_email_enabled', 'daily_email_time', 'daily_email_recipients')
         widgets = {
             'timezone': forms.Select(
                 choices=[(tz, tz) for tz in pytz.common_timezones],
                 attrs={'class': 'form-select'}
             ),
+            'group_night_events': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'daily_email_enabled': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'daily_email_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'daily_email_recipients': forms.Textarea(attrs={
@@ -127,12 +128,14 @@ class SettingsForm(forms.ModelForm):
         }
         labels = {
             'timezone': 'Your Timezone',
+            'group_night_events': 'Group Events by Night',
             'daily_email_enabled': 'Enable Daily Summary Email',
             'daily_email_time': 'Email Time',
             'daily_email_recipients': 'Email Recipients',
         }
         help_texts = {
             'timezone': 'All times will be displayed in your timezone',
+            'group_night_events': 'Show events from 8 PM to 8 AM grouped together on the starting day',
             'daily_email_time': 'Time to send daily summary (in your timezone)',
             'daily_email_recipients': 'Comma-separated list of email addresses to receive daily summaries',
         }

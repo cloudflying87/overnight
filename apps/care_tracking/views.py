@@ -290,7 +290,8 @@ def calendar_view(request):
     year = int(request.GET.get('year', today.year))
     month = int(request.GET.get('month', today.month))
 
-    # Create calendar
+    # Create calendar with Sunday as first day (6 = Sunday in Python's calendar)
+    calendar.setfirstweekday(calendar.SUNDAY)
     cal = calendar.monthcalendar(year, month)
 
     # Get days with events for this month
@@ -351,13 +352,37 @@ def calendar_view(request):
 @login_required
 def day_view(request, year, month, day):
     """View all events and notes for a specific day"""
-    selected_date = date(year, month, day)
+    import pytz
+    from datetime import datetime
 
-    # Get all events for this day
-    events = NightEvent.objects.filter(
-        user=request.user,
-        event_datetime__date=selected_date
-    ).prefetch_related('event_options').order_by('event_datetime')
+    selected_date = date(year, month, day)
+    user_tz = pytz.timezone(request.user.timezone)
+
+    # Check if user wants to group by night (8pm-8am)
+    if request.user.group_night_events:
+        # Night starts at 8pm on selected_date and ends at 8am next day
+        night_start = user_tz.localize(datetime.combine(selected_date, datetime.min.time().replace(hour=20)))
+        night_end = night_start + timedelta(hours=12)  # 8am next day
+
+        # Convert to UTC for database query
+        night_start_utc = night_start.astimezone(pytz.UTC)
+        night_end_utc = night_end.astimezone(pytz.UTC)
+
+        events = NightEvent.objects.filter(
+            user=request.user,
+            event_datetime__gte=night_start_utc,
+            event_datetime__lt=night_end_utc
+        ).prefetch_related('event_options').order_by('event_datetime')
+
+        date_range_label = f"{selected_date.strftime('%b %d, %Y')} Night (8 PM - 8 AM)"
+    else:
+        # Regular calendar day view
+        events = NightEvent.objects.filter(
+            user=request.user,
+            event_datetime__date=selected_date
+        ).prefetch_related('event_options').order_by('event_datetime')
+
+        date_range_label = selected_date.strftime('%B %d, %Y')
 
     # Get day note for this day
     try:
@@ -369,6 +394,8 @@ def day_view(request, year, month, day):
         'selected_date': selected_date,
         'events': events,
         'day_note': day_note,
+        'date_range_label': date_range_label,
+        'is_night_view': request.user.group_night_events,
     }
 
     return render(request, 'care_tracking/day_view.html', context)

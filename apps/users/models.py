@@ -16,6 +16,12 @@ class User(AbstractUser):
     daily_email_time = models.TimeField(default='07:00:00', help_text='Time to send daily summary email')
     daily_email_recipients = models.TextField(blank=True, help_text='Comma-separated email addresses')
 
+    # Display preferences
+    group_night_events = models.BooleanField(
+        default=False,
+        help_text='Group events by night (8 PM - 8 AM) instead of calendar day'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
