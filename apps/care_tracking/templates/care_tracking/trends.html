@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Trends & Analytics - OvernightApp{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Event Trends & Analytics</h2>
+            <p class="text-muted">Analyze patterns in nighttime events</p>
+        </div>
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Time Range</h5>
+            <div class="btn-group" role="group">
+                <a href="?days=7" class="btn btn-sm {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 7 Days</a>
+                <a href="?days=14" class="btn btn-sm {% if days == 14 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 14 Days</a>
+                <a href="?days=30" class="btn btn-sm {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 30 Days</a>
+                <a href="?days=60" class="btn btn-sm {% if days == 60 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 60 Days</a>
+                <a href="?days=90" class="btn btn-sm {% if days == 90 %}btn-primary{% else %}btn-outline-primary{% endif %}">Last 90 Days</a>
+            </div>
+            <p class="small text-muted mt-2 mb-0">Showing {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Events</h6>
+                    <h2 class="mb-0">{{ stats.total_events }}</h2>
+                    <small class="text-muted">in {{ days }} days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Average Per Night</h6>
+                    <h2 class="mb-0">{{ stats.avg_events_per_night }}</h2>
+                    <small class="text-muted">events/night (all nights)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Average (Active Nights)</h6>
+                    <h2 class="mb-0">{{ stats.avg_events_on_active_nights }}</h2>
+                    <small class="text-muted">on {{ stats.days_with_events }} active nights</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Event Types -->
+    {% if top_event_types %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Most Common Event Types</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for event_type, count in top_event_types %}
+                <div class="col-md-4 mb-2">
+                    <strong>{{ event_type }}:</strong> {{ count }} times
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Daily Breakdown -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Daily Event Counts</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="text-center">Events</th>
+                            <th>Event Types</th>
+                            <th class="text-center">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day in daily_data %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'care_tracking:day_view' day.date.year day.date.month day.date.day %}">
+                                    {{ day.date|date:"D, M d, Y" }}
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                {% if day.event_count > 0 %}
+                                    <span class="badge bg-primary">{{ day.event_count }}</span>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if day.event_types %}
+                                    {% for event_type, count in day.event_types.items %}
+                                        <small class="me-2">{{ event_type }} ({{ count }})</small>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted small">No events</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if day.has_note %}
+                                    <span class="badge bg-success">✓</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

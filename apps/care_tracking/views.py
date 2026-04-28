@@ -372,3 +372,96 @@ def day_view(request, year, month, day):
     }
 
     return render(request, 'care_tracking/day_view.html', context)
+
+# ============================================================================
+# TRENDS / ANALYTICS
+# ============================================================================
+
+@login_required
+def trends_view(request):
+    """View trends and analytics for night events"""
+    import pytz
+    from collections import defaultdict
+    
+    # Get date range from query params (default to last 30 days)
+    days = int(request.GET.get('days', 30))
+    
+    # Get user's timezone
+    user_tz = pytz.timezone(request.user.timezone)
+    now_utc = timezone.now()
+    now_local = now_utc.astimezone(user_tz)
+    
+    # Calculate date range
+    end_date = now_local.date()
+    start_date = end_date - timedelta(days=days - 1)
+    
+    # Get all events in date range
+    events = NightEvent.objects.filter(
+        user=request.user,
+        event_datetime__date__gte=start_date,
+        event_datetime__date__lte=end_date
+    ).prefetch_related('event_options')
+    
+    # Group events by date (in user's timezone)
+    events_by_date = defaultdict(list)
+    for event in events:
+        event_local = event.event_datetime.astimezone(user_tz)
+        event_date = event_local.date()
+        events_by_date[event_date].append(event)
+    
+    # Build daily summary data
+    daily_data = []
+    for i in range(days):
+        current_date = start_date + timedelta(days=i)
+        date_events = events_by_date.get(current_date, [])
+        
+        # Count events by type
+        event_type_counts = defaultdict(int)
+        for event in date_events:
+            for option in event.event_options.all():
+                event_type_counts[option.name] += 1
+        
+        daily_data.append({
+            'date': current_date,
+            'event_count': len(date_events),
+            'events': date_events,
+            'event_types': dict(event_type_counts),
+            'has_note': DayNote.objects.filter(user=request.user, date=current_date).exists(),
+        })
+    
+    # Reverse so newest is first
+    daily_data.reverse()
+    
+    # Calculate statistics
+    event_counts = [d['event_count'] for d in daily_data]
+    total_events = sum(event_counts)
+    days_with_events = sum(1 for count in event_counts if count > 0)
+    avg_events_per_night = total_events / days if days > 0 else 0
+    avg_events_on_active_nights = total_events / days_with_events if days_with_events > 0 else 0
+    max_events_in_night = max(event_counts) if event_counts else 0
+    
+    # Find most common event types
+    all_event_types = defaultdict(int)
+    for day_data in daily_data:
+        for event_type, count in day_data['event_types'].items():
+            all_event_types[event_type] += count
+    
+    # Sort by count descending
+    top_event_types = sorted(all_event_types.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    context = {
+        'daily_data': daily_data,
+        'days': days,
+        'start_date': start_date,
+        'end_date': end_date,
+        'stats': {
+            'total_events': total_events,
+            'days_with_events': days_with_events,
+            'avg_events_per_night': round(avg_events_per_night, 1),
+            'avg_events_on_active_nights': round(avg_events_on_active_nights, 1),
+            'max_events_in_night': max_events_in_night,
+        },
+        'top_event_types': top_event_types,
+    }
+    
+    return render(request, 'care_tracking/trends.html', context)
