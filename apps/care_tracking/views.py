@@ -10,6 +10,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta, date
 import calendar
+import pytz
 
 from .models import EventOption, NightEvent, DayNote
 from .forms import EventOptionForm, NightEventForm, DayNoteForm
@@ -293,7 +294,6 @@ class DayNoteDeleteView(LoginRequiredMixin, UserOwnsObjectMixin, DeleteView):
 @login_required
 def calendar_view(request):
     """Calendar view showing which days have events"""
-    import pytz
     from datetime import datetime
 
     # Get year and month from query params, default to current
@@ -409,7 +409,6 @@ def calendar_view(request):
 @login_required
 def day_view(request, year, month, day):
     """View all events and notes for a specific day"""
-    import pytz
     from datetime import datetime
 
     selected_date = date(year, month, day)
@@ -477,7 +476,6 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
         event_type_filter: Optional event type filter
         email_format: 'summary' (count only), 'daily' (grouped by day), or 'detailed' (all events)
     """
-    import pytz
     from django.core.mail import EmailMultiAlternatives
     from django.template.loader import render_to_string
     from django.utils.html import strip_tags
@@ -594,7 +592,6 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
 @login_required
 def trends_view(request):
     """View trends and analytics for night events"""
-    import pytz
     from collections import defaultdict
     from django.core.mail import EmailMultiAlternatives
     from django.template.loader import render_to_string
@@ -859,7 +856,6 @@ def export_events_csv(request):
     """Export events to CSV format"""
     import csv
     from django.http import HttpResponse
-    import pytz
     from datetime import datetime
 
     # Get filters from query params
