@@ -178,6 +178,14 @@ class NightEventUpdateView(LoginRequiredMixin, UserOwnsObjectMixin, UpdateView):
         kwargs['user'] = self.request.user
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.object and self.object.event_datetime:
+            user_tz = pytz.timezone(self.request.user.timezone)
+            local_dt = self.object.event_datetime.astimezone(user_tz)
+            context['local_event_datetime'] = local_dt.strftime('%Y-%m-%dT%H:%M')
+        return context
+
     def form_valid(self, form):
         messages.success(self.request, 'Night event updated successfully!')
         return super().form_valid(form)

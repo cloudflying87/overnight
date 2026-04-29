@@ -25,6 +25,11 @@
                             {% endif %}
                             <small class="form-text text-muted">Automatically set to now, but you can adjust if needed</small>
                         </div>
+                        {% if local_event_datetime %}
+                        <script>
+                        document.getElementById('id_event_datetime').value = '{{ local_event_datetime }}';
+                        </script>
+                        {% endif %}
 
                         <div class="mb-4">
                             <label class="form-label">{{ form.event_options.label }}</label>
