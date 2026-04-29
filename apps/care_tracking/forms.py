@@ -43,6 +43,17 @@ class EventOptionForm(forms.ModelForm):
 class NightEventForm(forms.ModelForm):
     """Form for logging night events"""
 
+    # Declared as CharField so Django never touches timezone conversion.
+    # We handle display (local→string in __init__) and saving (string→UTC
+    # in clean_event_datetime) entirely ourselves.
+    event_datetime = forms.CharField(
+        widget=forms.DateTimeInput(attrs={
+            'class': 'form-control',
+            'type': 'datetime-local',
+        }),
+        label='When did this happen?',
+    )
+
     class Meta:
         model = NightEvent
         fields = ['event_options', 'notes', 'event_datetime']
@@ -55,22 +66,16 @@ class NightEventForm(forms.ModelForm):
                 'placeholder': 'Optional notes about this event...',
                 'rows': 4
             }),
-            'event_datetime': forms.DateTimeInput(attrs={
-                'class': 'form-control',
-                'type': 'datetime-local',
-            }),
         }
         labels = {
             'event_options': 'What happened? (Select all that apply)',
             'notes': 'Additional Notes',
-            'event_datetime': 'When did this happen?'
         }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        # Only show active event options for the current user
         if user:
             self.fields['event_options'].queryset = EventOption.objects.filter(
                 user=user,
@@ -79,44 +84,28 @@ class NightEventForm(forms.ModelForm):
 
             user_tz = pytz.timezone(user.timezone)
 
-            # Override prepare_value on the field instance so Django converts
-            # the stored UTC datetime to local time before rendering the input.
-            # (Django's default prepare_value calls to_current_timezone() which
-            # resolves to UTC because settings.TIME_ZONE='UTC'.)
-            def _prepare_local(value, _tz=user_tz):
-                if isinstance(value, datetime.datetime):
-                    return value.astimezone(_tz).strftime('%Y-%m-%dT%H:%M')
-                return value
-            self.fields['event_datetime'].prepare_value = _prepare_local
-
-            # Set default datetime to now in user's timezone if creating new
             if not self.instance.pk:
-                now_utc = timezone.now()
-                now_local = now_utc.astimezone(user_tz)
-                self.initial['event_datetime'] = now_local.strftime('%Y-%m-%dT%H:%M')
-            # If editing, set initial too (belt-and-suspenders alongside prepare_value)
+                local_str = timezone.now().astimezone(user_tz).strftime('%Y-%m-%dT%H:%M')
             elif self.instance.event_datetime:
-                event_local = self.instance.event_datetime.astimezone(user_tz)
-                self.initial['event_datetime'] = event_local.strftime('%Y-%m-%dT%H:%M')
+                local_str = self.instance.event_datetime.astimezone(user_tz).strftime('%Y-%m-%dT%H:%M')
+            else:
+                local_str = ''
 
-        # Store user for later use in clean
+            self.initial['event_datetime'] = local_str
+
         self.user = user
 
     def clean_event_datetime(self):
-        """Convert datetime from user's timezone to UTC for storage."""
-        event_datetime = self.cleaned_data.get('event_datetime')
-
-        if event_datetime and self.user:
+        """Parse the local datetime string and convert to UTC for storage."""
+        value = self.cleaned_data.get('event_datetime')
+        if value and self.user:
             user_tz = pytz.timezone(self.user.timezone)
-            # Django's DateTimeField.to_python() attaches UTC tzinfo to naive
-            # inputs when USE_TZ=True + TIME_ZONE='UTC', so is_naive() returns
-            # False and the conversion gets skipped. Strip whatever tzinfo
-            # Django added and re-localize to the user's actual timezone.
-            naive_dt = event_datetime.replace(tzinfo=None)
-            local_dt = user_tz.localize(naive_dt)
-            return local_dt.astimezone(pytz.UTC)
-
-        return event_datetime
+            try:
+                naive_dt = datetime.datetime.strptime(value, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                raise forms.ValidationError('Enter a valid date and time.')
+            return user_tz.localize(naive_dt).astimezone(pytz.UTC)
+        return value
 
 
 class DayNoteForm(forms.ModelForm):
