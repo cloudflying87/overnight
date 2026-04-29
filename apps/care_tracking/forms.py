@@ -91,20 +91,18 @@ class NightEventForm(forms.ModelForm):
         self.user = user
 
     def clean_event_datetime(self):
-        """Convert naive datetime from user's timezone to UTC"""
+        """Convert datetime from user's timezone to UTC for storage."""
         event_datetime = self.cleaned_data.get('event_datetime')
 
         if event_datetime and self.user:
-            # The datetime from the form is naive (no timezone)
-            # It represents the user's local time
             user_tz = pytz.timezone(self.user.timezone)
-
-            # Make it aware in the user's timezone
-            if timezone.is_naive(event_datetime):
-                local_dt = user_tz.localize(event_datetime)
-                # Convert to UTC for storage
-                utc_dt = local_dt.astimezone(pytz.UTC)
-                return utc_dt
+            # Django's DateTimeField.to_python() attaches UTC tzinfo to naive
+            # inputs when USE_TZ=True + TIME_ZONE='UTC', so is_naive() returns
+            # False and the conversion gets skipped. Strip whatever tzinfo
+            # Django added and re-localize to the user's actual timezone.
+            naive_dt = event_datetime.replace(tzinfo=None)
+            local_dt = user_tz.localize(naive_dt)
+            return local_dt.astimezone(pytz.UTC)
 
         return event_datetime
 
