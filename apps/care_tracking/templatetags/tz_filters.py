@@ -25,8 +25,9 @@ def user_timezone(value, user):
         if timezone.is_naive(value):
             value = timezone.make_aware(value, timezone.utc)
 
-        # Convert to user's timezone
-        return value.astimezone(user_tz)
+        # Convert to user's timezone and strip tzinfo so Django's |date
+        # filter doesn't re-convert back to UTC (TIME_ZONE='UTC' in settings).
+        return value.astimezone(user_tz).replace(tzinfo=None)
     except Exception:
         # If anything goes wrong, return the original value
         return value
