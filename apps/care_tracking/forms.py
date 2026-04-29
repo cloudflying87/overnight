@@ -1,7 +1,32 @@
 from django import forms
 from django.utils import timezone
 import pytz
+import datetime
 from .models import EventOption, NightEvent, DayNote
+
+
+class LocalDateTimeInput(forms.DateTimeInput):
+    """
+    datetime-local widget that always renders in the user's local timezone.
+    Django's default DateTimeField.prepare_value() calls to_current_timezone()
+    which uses settings.TIME_ZONE ('UTC'), so the instance's stored UTC datetime
+    can end up displayed as UTC in the input. This widget converts any datetime
+    to user_tz before formatting, regardless of how Django resolved the value.
+    """
+
+    def __init__(self, *args, user_tz=None, **kwargs):
+        kwargs.setdefault('attrs', {})
+        kwargs['attrs'].setdefault('type', 'datetime-local')
+        super().__init__(*args, **kwargs)
+        self.user_tz = user_tz
+
+    def format_value(self, value):
+        if isinstance(value, datetime.datetime) and self.user_tz:
+            local = value.astimezone(self.user_tz)
+            return local.strftime('%Y-%m-%dT%H:%M')
+        if isinstance(value, str):
+            return value
+        return super().format_value(value)
 
 
 class EventOptionForm(forms.ModelForm):
@@ -52,9 +77,8 @@ class NightEventForm(forms.ModelForm):
                 'placeholder': 'Optional notes about this event...',
                 'rows': 4
             }),
-            'event_datetime': forms.DateTimeInput(attrs={
+            'event_datetime': LocalDateTimeInput(attrs={
                 'class': 'form-control',
-                'type': 'datetime-local'
             }),
         }
         labels = {
@@ -74,8 +98,9 @@ class NightEventForm(forms.ModelForm):
                 is_active=True
             ).order_by('name')
 
-            # Convert datetime to user's timezone for display
+            # Wire user timezone into the widget so it can convert on render
             user_tz = pytz.timezone(user.timezone)
+            self.fields['event_datetime'].widget.user_tz = user_tz
 
             # Set default datetime to now in user's timezone if creating new
             if not self.instance.pk:
