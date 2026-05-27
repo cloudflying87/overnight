@@ -1,7 +1,10 @@
 """
 Utility functions for care tracking app
 """
-from .models import EventOption
+from .models import EventOption, CareShare
+
+# Session key holding the id of the user whose records are being viewed.
+SUBJECT_SESSION_KEY = 'viewing_subject_id'
 
 
 # Default event options to create for new users
@@ -57,3 +60,41 @@ def get_user_active_options(user):
         QuerySet: Active EventOption instances
     """
     return EventOption.objects.filter(user=user, is_active=True).order_by('name')
+
+
+def get_shared_owners(user):
+    """
+    Users who have shared their records (read-only) with ``user``.
+
+    Returns:
+        QuerySet of User, ordered by display name then username.
+    """
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    return User.objects.filter(
+        shares_given__viewer=user
+    ).distinct().order_by('display_name', 'username')
+
+
+def resolve_subject(request):
+    """
+    Determine whose records the current request should display.
+
+    Returns ``(subject_user, is_owner)``:
+      - the logged-in user themselves (is_owner=True) by default, or
+      - a shared owner the user has selected (is_owner=False), validated
+        against the set of owners who have actually shared with them.
+
+    An invalid or stale session selection silently falls back to self.
+    """
+    user = request.user
+    subject_id = request.session.get(SUBJECT_SESSION_KEY)
+
+    if subject_id and subject_id != user.id:
+        owner = get_shared_owners(user).filter(id=subject_id).first()
+        if owner is not None:
+            return owner, False
+        # Stale/invalid selection — clear it.
+        request.session.pop(SUBJECT_SESSION_KEY, None)
+
+    return user, True

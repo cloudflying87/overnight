@@ -14,7 +14,12 @@ import pytz
 
 from .models import EventOption, NightEvent, DayNote
 from .forms import EventOptionForm, NightEventForm, DayNoteForm
-from .utils import get_user_active_options
+from .utils import (
+    get_user_active_options,
+    get_shared_owners,
+    resolve_subject,
+    SUBJECT_SESSION_KEY,
+)
 
 
 class UserOwnsObjectMixin(UserPassesTestMixin):
@@ -33,7 +38,8 @@ class UserOwnsObjectMixin(UserPassesTestMixin):
 def dashboard_view(request):
     """Main dashboard showing recent activity and quick stats"""
 
-    user = request.user
+    # Whose records to show: self, or a shared owner the viewer selected.
+    user, _is_owner = resolve_subject(request)
 
     # Get recent events (last 7 days)
     seven_days_ago = timezone.now() - timedelta(days=7)
@@ -132,8 +138,9 @@ class NightEventListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        subject, _ = resolve_subject(self.request)
         queryset = NightEvent.objects.filter(
-            user=self.request.user
+            user=subject
         ).prefetch_related('event_options').order_by('-event_datetime')
 
         # Filter by date if provided
@@ -215,7 +222,8 @@ class DayNoteListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return DayNote.objects.filter(user=self.request.user).order_by('-date')
+        subject, _ = resolve_subject(self.request)
+        return DayNote.objects.filter(user=subject).order_by('-date')
 
 
 class DayNoteCreateView(LoginRequiredMixin, CreateView):
@@ -296,8 +304,12 @@ def calendar_view(request):
     """Calendar view showing which days have events"""
     from datetime import datetime
 
-    # Get year and month from query params, default to current
-    user_tz = pytz.timezone(request.user.timezone)
+    # Whose records to show: self, or a shared owner the viewer selected.
+    subject, _is_owner = resolve_subject(request)
+
+    # Get year and month from query params, default to current.
+    # Dates/grouping follow the subject's own timezone and preferences.
+    user_tz = pytz.timezone(subject.timezone)
     now_utc = timezone.now()
     now_local = now_utc.astimezone(user_tz)
     today = now_local.date()
@@ -317,12 +329,12 @@ def calendar_view(request):
         month_end = date(year, month + 1, 1)
 
     # Get dates with night events
-    if request.user.group_night_events:
+    if subject.group_night_events:
         # When grouping by night, map events to their night start date
         # A night starts at 5 PM and ends at 10 AM next day
         # Events before 10 AM belong to previous day's night
         events = NightEvent.objects.filter(
-            user=request.user,
+            user=subject,
             event_datetime__date__gte=month_start - timedelta(days=1),  # Include previous day for early AM events
             event_datetime__date__lt=month_end
         ).select_related('user')
@@ -360,7 +372,7 @@ def calendar_view(request):
     else:
         # Regular calendar view - show events by their date
         event_dates_raw = NightEvent.objects.filter(
-            user=request.user,
+            user=subject,
             event_datetime__date__gte=month_start,
             event_datetime__date__lt=month_end
         ).values_list('event_datetime__date', flat=True)
@@ -368,7 +380,7 @@ def calendar_view(request):
 
     # Get dates with day notes (as day numbers)
     note_dates_raw = DayNote.objects.filter(
-        user=request.user,
+        user=subject,
         date__gte=month_start,
         date__lt=month_end
     ).values_list('date', flat=True)
@@ -412,10 +424,13 @@ def day_view(request, year, month, day):
     from datetime import datetime
 
     selected_date = date(year, month, day)
-    user_tz = pytz.timezone(request.user.timezone)
 
-    # Check if user wants to group by night (5pm-10am)
-    if request.user.group_night_events:
+    # Whose records to show: self, or a shared owner the viewer selected.
+    subject, _is_owner = resolve_subject(request)
+    user_tz = pytz.timezone(subject.timezone)
+
+    # Check if the subject wants to group by night (5pm-10am)
+    if subject.group_night_events:
         # Night starts at 5pm on selected_date and ends at 10am next day
         night_start = user_tz.localize(datetime.combine(selected_date, datetime.min.time().replace(hour=17, minute=0, second=0)))
         night_end = night_start + timedelta(hours=17)  # 10am next day
@@ -426,7 +441,7 @@ def day_view(request, year, month, day):
         night_end_utc = night_end.astimezone(pytz.UTC)
 
         events = NightEvent.objects.filter(
-            user=request.user,
+            user=subject,
             event_datetime__gte=night_start_utc,
             event_datetime__lt=night_end_utc
         ).prefetch_related('event_options').order_by('event_datetime')
@@ -439,7 +454,7 @@ def day_view(request, year, month, day):
     else:
         # Regular calendar day view
         events = NightEvent.objects.filter(
-            user=request.user,
+            user=subject,
             event_datetime__date=selected_date
         ).prefetch_related('event_options').order_by('event_datetime')
 
@@ -447,7 +462,7 @@ def day_view(request, year, month, day):
 
     # Get day note for this day
     try:
-        day_note = DayNote.objects.get(user=request.user, date=selected_date)
+        day_note = DayNote.objects.get(user=subject, date=selected_date)
     except DayNote.DoesNotExist:
         day_note = None
 
@@ -456,7 +471,7 @@ def day_view(request, year, month, day):
         'events': events,
         'day_note': day_note,
         'date_range_label': date_range_label,
-        'is_night_view': request.user.group_night_events,
+        'is_night_view': subject.group_night_events,
     }
 
     return render(request, 'care_tracking/day_view.html', context)
@@ -598,8 +613,15 @@ def trends_view(request):
     from django.utils.html import strip_tags
     from datetime import datetime
 
-    # Handle email sending action
+    # Whose records to show: self, or a shared owner the viewer selected.
+    subject, is_owner = resolve_subject(request)
+
+    # Handle email sending action (owner only — uses the owner's recipients)
     if request.method == 'POST' and 'send_email' in request.POST:
+        if not is_owner:
+            messages.error(request, 'Only the record owner can send summary emails.')
+            return redirect(request.path)
+
         email_format = request.POST.get('email_format', 'summary')
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
@@ -622,8 +644,8 @@ def trends_view(request):
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
 
-    # Get user's timezone
-    user_tz = pytz.timezone(request.user.timezone)
+    # Use the subject's timezone for night grouping and display
+    user_tz = pytz.timezone(subject.timezone)
     now_utc = timezone.now()
     now_local = now_utc.astimezone(user_tz)
 
@@ -646,7 +668,7 @@ def trends_view(request):
 
     # Get all events in date range
     events = NightEvent.objects.filter(
-        user=request.user,
+        user=subject,
         event_datetime__date__gte=start_date,
         event_datetime__date__lte=end_date
     ).prefetch_related('event_options')
@@ -657,7 +679,7 @@ def trends_view(request):
 
     # Get all unique event types for filter dropdown
     all_event_types_for_filter = EventOption.objects.filter(
-        user=request.user,
+        user=subject,
         is_active=True
     ).order_by('name').values_list('name', flat=True)
     
@@ -688,7 +710,7 @@ def trends_view(request):
             'event_count': len(night_events),
             'events': night_events,
             'event_types': dict(event_type_counts),
-            'has_note': DayNote.objects.filter(user=request.user, date=night_start).exists(),
+            'has_note': DayNote.objects.filter(user=subject, date=night_start).exists(),
         })
 
     # Reverse so newest is first
@@ -863,8 +885,11 @@ def export_events_csv(request):
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
 
-    # Get user's timezone
-    user_tz = pytz.timezone(request.user.timezone)
+    # Whose records to export: self, or a shared owner the viewer selected.
+    subject, _is_owner = resolve_subject(request)
+
+    # Use the subject's timezone for display
+    user_tz = pytz.timezone(subject.timezone)
     now_utc = timezone.now()
     now_local = now_utc.astimezone(user_tz)
 
@@ -881,7 +906,7 @@ def export_events_csv(request):
 
     # Query events
     events = NightEvent.objects.filter(
-        user=request.user,
+        user=subject,
         event_datetime__date__gte=start_date,
         event_datetime__date__lte=end_date
     ).prefetch_related('event_options').order_by('-event_datetime')
@@ -909,3 +934,40 @@ def export_events_csv(request):
         ])
 
     return response
+
+
+# ============================================================================
+# SHARED-VIEW SUBJECT SWITCHER
+# ============================================================================
+
+@login_required
+def switch_subject(request):
+    """
+    Select whose records to view: your own, or a shared owner's (read-only).
+
+    The selection is stored in the session and validated on every request by
+    ``resolve_subject``, so a revoked share immediately stops working.
+    """
+    if request.method != 'POST':
+        return redirect('care_tracking:dashboard')
+
+    subject_id = request.POST.get('subject_id', '')
+
+    if subject_id and subject_id != str(request.user.id):
+        try:
+            sid = int(subject_id)
+        except (TypeError, ValueError):
+            sid = None
+        if sid and get_shared_owners(request.user).filter(id=sid).exists():
+            request.session[SUBJECT_SESSION_KEY] = sid
+        else:
+            request.session.pop(SUBJECT_SESSION_KEY, None)
+    else:
+        # Switching back to self.
+        request.session.pop(SUBJECT_SESSION_KEY, None)
+
+    # Return to where the user was, but only for safe relative paths.
+    next_url = request.POST.get('next', '')
+    if next_url.startswith('/') and not next_url.startswith('//'):
+        return redirect(next_url)
+    return redirect('care_tracking:dashboard')

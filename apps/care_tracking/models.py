@@ -3,6 +3,49 @@ from django.conf import settings
 from django.utils import timezone
 
 
+class CareShare(models.Model):
+    """
+    Read-only sharing link: ``owner`` grants ``viewer`` permission to view
+    (never edit) the owner's night events, day notes, and calendar.
+
+    Managed in the Django admin for now. Editing always stays bound to the
+    record owner, so a viewer can never modify shared data.
+    """
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='shares_given',
+        help_text='The user whose records are being shared.'
+    )
+    viewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='shares_received',
+        help_text='The user who is allowed to view (read-only) the records.'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'care_shares'
+        ordering = ['owner', 'viewer']
+        unique_together = [['owner', 'viewer']]
+        indexes = [
+            models.Index(fields=['viewer']),
+            models.Index(fields=['owner']),
+        ]
+        verbose_name = 'Care Share'
+        verbose_name_plural = 'Care Shares'
+
+    def __str__(self):
+        return f"{self.owner.get_display_name()} → {self.viewer.get_display_name()} (read-only)"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.owner_id and self.owner_id == self.viewer_id:
+            raise ValidationError("A user cannot share records with themselves.")
+
+
 class EventOption(models.Model):
     """
     User-customizable event options (e.g., "woke up", "restless").

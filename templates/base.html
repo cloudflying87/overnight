@@ -60,17 +60,49 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'care_tracking:trends' %}">Trends</a>
                     </li>
+                    {% if viewing_is_owner %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'care_tracking:nightevent_create' %}">Log Event</a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'care_tracking:daynote_list' %}">Day Notes</a>
                     </li>
+                    {% if viewing_is_owner %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'care_tracking:eventoption_list' %}">Event Options</a>
                     </li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav">
+                    {% if shared_owners %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="subjectDropdown" role="button" data-bs-toggle="dropdown">
+                            👁 {{ current_subject.get_display_name }}{% if not viewing_is_owner %} (read-only){% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <form method="post" action="{% url 'care_tracking:switch_subject' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="subject_id" value="{{ user.id }}">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="dropdown-item {% if viewing_is_owner %}active{% endif %}">My records</button>
+                                </form>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% for owner in shared_owners %}
+                            <li>
+                                <form method="post" action="{% url 'care_tracking:switch_subject' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="subject_id" value="{{ owner.id }}">
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="dropdown-item {% if current_subject.id == owner.id %}active{% endif %}">{{ owner.get_display_name }}</button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <button id="theme-toggle" class="theme-toggle nav-link" onclick="toggleTheme()" aria-label="Toggle theme">
                             🌗
@@ -96,6 +128,21 @@
             </div>
         </div>
     </nav>
+    {% endif %}
+
+    <!-- Read-only sharing banner -->
+    {% if user.is_authenticated and not viewing_is_owner %}
+    <div class="container mt-3">
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-0" role="alert">
+            <span>👁 Viewing <strong>{{ current_subject.get_display_name }}</strong>'s records (read-only).</span>
+            <form method="post" action="{% url 'care_tracking:switch_subject' %}" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="subject_id" value="{{ user.id }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Back to my records</button>
+            </form>
+        </div>
+    </div>
     {% endif %}
 
     <!-- Messages -->

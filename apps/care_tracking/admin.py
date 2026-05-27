@@ -1,5 +1,30 @@
 from django.contrib import admin
-from .models import EventOption, NightEvent, DayNote
+from .models import EventOption, NightEvent, DayNote, CareShare
+
+
+@admin.register(CareShare)
+class CareShareAdmin(admin.ModelAdmin):
+    """Admin for read-only sharing links between users."""
+
+    list_display = ['owner', 'viewer', 'created_at']
+    list_filter = ['owner', 'viewer', 'created_at']
+    search_fields = [
+        'owner__username', 'owner__email', 'owner__display_name',
+        'viewer__username', 'viewer__email', 'viewer__display_name',
+    ]
+    readonly_fields = ['created_at', 'updated_at']
+    list_select_related = ['owner', 'viewer']
+
+    fieldsets = (
+        ('Sharing Link (read-only)', {
+            'fields': ('owner', 'viewer'),
+            'description': "The viewer will be able to see, but never edit, the owner's records.",
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
 
 
 @admin.register(EventOption)

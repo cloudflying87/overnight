@@ -84,6 +84,7 @@
                         </a>
                     </div>
 
+                    {% if viewing_is_owner %}
                     {% if user.daily_email_recipients %}
                     <div class="btn-group mb-2" role="group">
                         <button type="button" class="btn btn-sm btn-primary" onclick="sendEmail('summary')">
@@ -114,6 +115,7 @@
                     <p class="small text-muted mb-0"><strong>Recipients:</strong> {{ user.daily_email_recipients }}</p>
                     {% else %}
                     <p class="small text-muted mb-0">Configure email recipients in Settings to enable email sending.</p>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>

@@ -10,6 +10,7 @@
             <h2>Night Events</h2>
             <p class="text-muted">All logged nighttime events</p>
         </div>
+        {% if viewing_is_owner %}
         <div class="col-auto">
             <a href="{% url 'care_tracking:nightevent_create' %}" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
@@ -19,6 +20,7 @@
                 Log New Event
             </a>
         </div>
+        {% endif %}
     </div>
 
     {% if events %}
@@ -29,7 +31,7 @@
                 <div class="list-group-item px-0">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">{{ event.event_datetime|user_timezone:user|date:"M d, Y - g:i A" }}</h6>
+                            <h6 class="mb-1">{{ event.event_datetime|user_timezone:current_subject|date:"M d, Y - g:i A" }}</h6>
                             <div class="mb-2">
                                 {% for option in event.event_options.all %}
                                 <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
@@ -41,10 +43,12 @@
                             <p class="mb-0 text-muted small">{{ event.notes|truncatewords:20 }}</p>
                             {% endif %}
                         </div>
+                        {% if viewing_is_owner %}
                         <div class="ms-3 d-flex gap-1">
                             <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-link">Edit</a>
                             <a href="{% url 'care_tracking:nightevent_delete' event.pk %}" class="btn btn-sm btn-link text-danger">Delete</a>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -92,7 +96,9 @@
             </svg>
             <h4>No Events Logged Yet</h4>
             <p class="text-muted">Start tracking nighttime events to see patterns over time.</p>
+            {% if viewing_is_owner %}
             <a href="{% url 'care_tracking:nightevent_create' %}" class="btn btn-primary">Log Your First Event</a>
+            {% endif %}
         </div>
     </div>
     {% endif %}

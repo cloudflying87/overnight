@@ -7,6 +7,9 @@ urlpatterns = [
     # Dashboard
     path('', views.dashboard_view, name='dashboard'),
 
+    # Read-only sharing: switch whose records are being viewed
+    path('switch-subject/', views.switch_subject, name='switch_subject'),
+
     # Event Options URLs
     path('options/', views.EventOptionListView.as_view(), name='eventoption_list'),
     path('options/create/', views.EventOptionCreateView.as_view(), name='eventoption_create'),
