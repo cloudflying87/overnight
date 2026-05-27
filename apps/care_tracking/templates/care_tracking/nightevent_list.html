@@ -30,7 +30,7 @@
                 {% for event in events %}
                 <div class="list-group-item px-0">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div class="flex-grow-1">
+                        <div class="flex-grow-1" role="button" data-bs-toggle="modal" data-bs-target="#eventModal{{ event.pk }}" style="cursor: pointer;">
                             <h6 class="mb-1">{{ event.event_datetime|user_timezone:current_subject|date:"M d, Y - g:i A" }}</h6>
                             <div class="mb-2">
                                 {% for option in event.event_options.all %}
@@ -43,12 +43,51 @@
                             <p class="mb-0 text-muted small">{{ event.notes|truncatewords:20 }}</p>
                             {% endif %}
                         </div>
-                        {% if viewing_is_owner %}
-                        <div class="ms-3 d-flex gap-1">
+                        <div class="ms-3 d-flex gap-1 align-items-center">
+                            {% if viewing_is_owner %}
                             <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-link">Edit</a>
                             <a href="{% url 'care_tracking:nightevent_delete' event.pk %}" class="btn btn-sm btn-link text-danger">Delete</a>
+                            {% endif %}
+                            <button type="button" class="btn btn-sm btn-link text-secondary" data-bs-toggle="modal" data-bs-target="#eventModal{{ event.pk }}" aria-label="View full details">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
                         </div>
-                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Event detail modal -->
+                <div class="modal fade" id="eventModal{{ event.pk }}" tabindex="-1" aria-labelledby="eventModalLabel{{ event.pk }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="eventModalLabel{{ event.pk }}">
+                                    {{ event.event_datetime|user_timezone:current_subject|date:"l, M d, Y - g:i A" }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    {% for option in event.event_options.all %}
+                                    <span class="badge" style="background-color: {{ option.color_code }}">{{ option.name }}</span>
+                                    {% empty %}
+                                    <span class="text-muted small">No event options</span>
+                                    {% endfor %}
+                                </div>
+                                {% if event.notes %}
+                                <p class="mb-0" style="white-space: pre-wrap;">{{ event.notes }}</p>
+                                {% else %}
+                                <p class="text-muted mb-0">No notes recorded.</p>
+                                {% endif %}
+                            </div>
+                            {% if viewing_is_owner %}
+                            <div class="modal-footer">
+                                <a href="{% url 'care_tracking:nightevent_update' event.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'care_tracking:nightevent_delete' event.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
