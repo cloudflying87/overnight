@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
@@ -193,6 +194,7 @@ def send_manual_email(user, time_range='24h'):
         'user_tz': user_tz,
         'time_range': time_range,
         'is_manual': True,
+        'site_url': settings.SITE_URL,
     }
 
     # Render email

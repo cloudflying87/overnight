@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -574,6 +575,7 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
         'email_format': email_format,
         'is_filtered': bool(event_type_filter),
         'daily_data': daily_data,  # For daily format
+        'site_url': settings.SITE_URL,
     }
 
     # Build subject based on format

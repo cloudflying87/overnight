@@ -29,6 +29,10 @@ DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
+# Absolute base URL of the site, used to build links in outgoing emails
+# (which have no request to derive the host from). No trailing slash.
+SITE_URL = env('SITE_URL', default='https://overnight.flyhomemnlab.com')
+
 
 # Application definition
 

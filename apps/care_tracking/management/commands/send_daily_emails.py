@@ -3,6 +3,7 @@ Management command to send daily email summaries to users.
 Run this command daily (via cron) to send email summaries.
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -53,6 +54,19 @@ class Command(BaseCommand):
                 # Convert current time to user's timezone
                 user_tz = pytz.timezone(user.timezone)
                 now_local = now_utc.astimezone(user_tz)
+                today_local = now_local.date()
+
+                # Skip if we already sent today's summary (prevents duplicate
+                # sends when the cron runs multiple times inside the time
+                # window). --force overrides this for testing.
+                if not force and user.daily_email_last_sent == today_local:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f'Skipping {user.username}: Already sent today ({today_local})'
+                        )
+                    )
+                    skipped_count += 1
+                    continue
 
                 # Get user's preferred email time
                 email_time = user.daily_email_time
@@ -126,6 +140,7 @@ class Command(BaseCommand):
                     'yesterday_date': yesterday_date,
                     'event_count': len(events),
                     'user_tz': user_tz,
+                    'site_url': settings.SITE_URL,
                 }
 
                 # Render email
@@ -144,6 +159,11 @@ class Command(BaseCommand):
 
                 # Send email
                 email.send()
+
+                # Record that today's summary went out so we don't resend it
+                # on the next cron run within the window.
+                user.daily_email_last_sent = today_local
+                user.save(update_fields=['daily_email_last_sent'])
 
                 self.stdout.write(
                     self.style.SUCCESS(

@@ -18,6 +18,28 @@ services:
     networks:
       - overnight_network
 
+  # Scheduler: runs the daily-summary command every 10 minutes. Each user's
+  # summary is sent only when the local time is within their configured send
+  # window, and the daily_email_last_sent guard ensures it goes out once per
+  # morning even though this loops more often than that.
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: overnight_cron
+    command: sh -c "while true; do python manage.py send_daily_emails; sleep 600; done"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DOCKER_CONTAINER=true
+    restart: unless-stopped
+    depends_on:
+      - web
+    networks:
+      - overnight_network
+
 volumes:
   static_volume:
 

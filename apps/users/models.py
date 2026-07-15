@@ -13,8 +13,13 @@ class User(AbstractUser):
 
     # Daily email settings
     daily_email_enabled = models.BooleanField(default=False)
-    daily_email_time = models.TimeField(default='07:00:00', help_text='Time to send daily summary email')
+    daily_email_time = models.TimeField(default='08:00:00', help_text='Time to send daily summary email')
     daily_email_recipients = models.TextField(blank=True, help_text='Comma-separated email addresses')
+    daily_email_last_sent = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Local date the last daily summary was sent, to avoid sending twice in one morning.",
+    )
 
     # Display preferences
     group_night_events = models.BooleanField(
