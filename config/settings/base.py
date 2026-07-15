@@ -97,6 +97,13 @@ DATABASES = {
         'OPTIONS': {
             'connect_timeout': 10,
         },
+        # The database host (hercules) pools connections, so PostgreSQL
+        # server-side cursors break: the transaction that declared the cursor
+        # is recycled before Django fetches from it, raising
+        # 'portal "_django_curs_..." does not exist'. Django uses server-side
+        # cursors implicitly (e.g. ModelChoiceField/QuerySet.iterator()), so we
+        # disable them globally to stay compatible with the pooler.
+        'DISABLE_SERVER_SIDE_CURSORS': True,
     }
 }
 

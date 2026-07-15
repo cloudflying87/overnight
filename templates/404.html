@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Page not found — OvernightApp</title>
+    <style>
+        :root { color-scheme: light dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(160deg, #0d6efd 0%, #0a58ca 100%);
+            color: #1b1f24;
+        }
+        .card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 18px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+        }
+        .emoji { font-size: 3.25rem; line-height: 1; margin-bottom: 1rem; }
+        h1 { font-size: 1.5rem; margin: 0 0 0.75rem; color: #0d6efd; }
+        p { font-size: 1rem; line-height: 1.55; margin: 0 0 0.75rem; color: #495057; }
+        .muted { font-size: 0.85rem; color: #868e96; margin-top: 1.5rem; margin-bottom: 0; }
+        .btn {
+            display: inline-block;
+            margin-top: 1.25rem;
+            padding: 0.65rem 1.4rem;
+            border-radius: 10px;
+            background: #0d6efd;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.15s ease;
+        }
+        .btn:hover { background: #0a58ca; }
+        @media (prefers-color-scheme: dark) {
+            body { color: #e9ecef; }
+            .card { background: #1c1f23; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); }
+            p { color: #ced4da; }
+            .muted { color: #868e96; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="emoji">🔍</div>
+        <h1>Page not found</h1>
+        <p>We couldn't find the page you were looking for. It may have been moved or removed.</p>
+        <a class="btn" href="/">Back to safety</a>
+        <p class="muted">OvernightApp &middot; Care Tracking System</p>
+    </div>
+</body>
+</html>
