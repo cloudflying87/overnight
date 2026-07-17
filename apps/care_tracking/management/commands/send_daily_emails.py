@@ -3,16 +3,11 @@ Management command to send daily email summaries to users.
 Run this command daily (via cron) to send email summaries.
 """
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.html import strip_tags
 from apps.users.models import User
-from apps.care_tracking.models import NightEvent, DayNote
+from apps.care_tracking.email_utils import send_nightly_summary, parse_recipients
 import pytz
-from datetime import datetime, timedelta
 
 
 class Command(BaseCommand):
@@ -88,31 +83,9 @@ class Command(BaseCommand):
                     skipped_count += 1
                     continue
 
-                # Get events from the last 24 hours
-                yesterday = now_utc - timedelta(hours=24)
-                events = list(NightEvent.objects.filter(
-                    user=user,
-                    event_datetime__gte=yesterday,
-                    event_datetime__lte=now_utc
-                ).prefetch_related('event_options').order_by('-event_datetime'))
-
-                # Convert event times to user's timezone
-                for event in events:
-                    if event.event_datetime:
-                        event.event_datetime_local = event.event_datetime.astimezone(user_tz)
-                    else:
-                        event.event_datetime_local = None
-
-                # Get day note from yesterday (in user's timezone)
-                yesterday_date = (now_local - timedelta(days=1)).date()
-                day_note = DayNote.objects.filter(
-                    user=user,
-                    date=yesterday_date
-                ).first()
-
-                # Parse recipients
-                recipients_str = user.daily_email_recipients.strip()
-                if not recipients_str:
+                # Must have recipients configured before we do anything else.
+                recipients = parse_recipients(user)
+                if not recipients:
                     self.stdout.write(
                         self.style.WARNING(
                             f'Skipping {user.username}: No recipients configured'
@@ -121,44 +94,23 @@ class Command(BaseCommand):
                     skipped_count += 1
                     continue
 
-                recipients = [email.strip() for email in recipients_str.split(',') if email.strip()]
+                # Build and send the night summary. Only send when the night
+                # actually has something to report (--force overrides this so
+                # you can test even on a quiet night).
+                sent = send_nightly_summary(
+                    user,
+                    recipients=recipients,
+                    skip_if_empty=not force,
+                )
 
-                if not recipients:
+                if not sent:
                     self.stdout.write(
                         self.style.WARNING(
-                            f'Skipping {user.username}: No valid recipients'
+                            f'Skipping {user.username}: Nothing logged overnight'
                         )
                     )
                     skipped_count += 1
                     continue
-
-                # Prepare context for email template
-                context = {
-                    'user': user,
-                    'events': events,
-                    'day_note': day_note,
-                    'yesterday_date': yesterday_date,
-                    'event_count': len(events),
-                    'user_tz': user_tz,
-                    'site_url': settings.SITE_URL,
-                }
-
-                # Render email
-                subject = f'Daily Night Summary - {yesterday_date.strftime("%B %d, %Y")}'
-                html_content = render_to_string('care_tracking/emails/daily_summary.html', context)
-                text_content = strip_tags(html_content)
-
-                # Create email
-                email = EmailMultiAlternatives(
-                    subject=subject,
-                    body=text_content,
-                    from_email=None,  # Use DEFAULT_FROM_EMAIL from settings
-                    to=recipients,
-                )
-                email.attach_alternative(html_content, "text/html")
-
-                # Send email
-                email.send()
 
                 # Record that today's summary went out so we don't resend it
                 # on the next cron run within the window.

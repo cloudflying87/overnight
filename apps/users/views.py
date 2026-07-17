@@ -112,6 +112,25 @@ def settings_view(request):
             except Exception as e:
                 messages.error(request, f'Error sending email: {str(e)}')
             return redirect('users:settings')
+        # Handle "send test summary" — the real nightly email, but only to
+        # the logged-in user, and even on a quiet night so they can preview it.
+        elif 'send_test' in request.POST:
+            from apps.care_tracking.email_utils import send_nightly_summary
+            try:
+                if not request.user.email:
+                    raise ValueError('Your account has no email address set.')
+                send_nightly_summary(
+                    request.user,
+                    recipients=[request.user.email],
+                    skip_if_empty=False,
+                )
+                messages.success(
+                    request,
+                    f'Test summary sent to {request.user.email}.'
+                )
+            except Exception as e:
+                messages.error(request, f'Error sending test summary: {str(e)}')
+            return redirect('users:settings')
     else:
         form = SettingsForm(instance=request.user)
 
