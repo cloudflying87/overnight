@@ -119,23 +119,12 @@
                         {% endif %}
                     </div>
 
-                    <p class="mb-3">Send an email summary immediately to your configured recipients.</p>
+                    <p class="mb-3">Send an email of <strong>every event you've ever logged</strong> to your configured recipients.</p>
 
                     {% if user.daily_email_recipients %}
                         <p class="small text-muted mb-3">
                             Will send to: <strong>{{ user.daily_email_recipients }}</strong>
                         </p>
-
-                        <form method="post" class="d-inline-block me-2">
-                            {% csrf_token %}
-                            <input type="hidden" name="time_range" value="24h">
-                            <button type="submit" name="send_email" class="btn btn-outline-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
-                                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
-                                </svg>
-                                Send Last 24 Hours
-                            </button>
-                        </form>
 
                         <form method="post" class="d-inline-block">
                             {% csrf_token %}
@@ -149,8 +138,8 @@
                         </form>
 
                         <p class="small text-muted mt-3 mb-0">
-                            <strong>Last 24 Hours:</strong> Includes events from the past day and yesterday's day note.<br>
                             <strong>All Events:</strong> Includes every event you've ever logged (may be a long email).
+                            For last night only, use the test button above.
                         </p>
                     {% else %}
                         <div class="alert alert-warning mb-0">
@@ -174,8 +163,9 @@
                     </ul>
                     <h6>Daily Email</h6>
                     <ul class="mb-0">
-                        <li>Sent every day at the time you specify</li>
-                        <li>Includes events from the previous 24 hours</li>
+                        <li>Sent every morning at the time you specify</li>
+                        <li>Covers the whole night (5 PM to 10 AM), including the day note</li>
+                        <li>Only sent when something was logged overnight</li>
                         <li>Can send to multiple recipients (family members, caregivers, etc.)</li>
                     </ul>
                 </div>
