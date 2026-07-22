@@ -222,7 +222,8 @@ def send_manual_email(user, time_range='24h'):
     else:
         subject = f'Daily Night Summary - {date_range}'
 
-    html_content = render_to_string('care_tracking/emails/daily_summary.html', context)
+    with timezone.override(user_tz):
+        html_content = render_to_string('care_tracking/emails/daily_summary.html', context)
     text_content = strip_tags(html_content)
 
     # Create and send email

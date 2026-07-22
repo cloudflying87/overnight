@@ -109,7 +109,8 @@ def send_nightly_summary(user, recipients=None, skip_if_empty=True):
 
     night_date = context['yesterday_date']
     subject = f'Nightly Summary - {night_date.strftime("%B %d, %Y")}'
-    html_content = render_to_string('care_tracking/emails/daily_summary.html', context)
+    with timezone.override(context['user_tz']):
+        html_content = render_to_string('care_tracking/emails/daily_summary.html', context)
     text_content = strip_tags(html_content)
 
     email = EmailMultiAlternatives(

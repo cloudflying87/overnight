@@ -592,7 +592,8 @@ def send_filtered_email(user, start_date_str, end_date_str, event_type_filter=''
         subject = f'Night Events {format_label} ({date_range})'
 
     # Render email
-    html_content = render_to_string('care_tracking/emails/filtered_summary.html', context)
+    with timezone.override(user_tz):
+        html_content = render_to_string('care_tracking/emails/filtered_summary.html', context)
     text_content = strip_tags(html_content)
 
     # Create and send email
