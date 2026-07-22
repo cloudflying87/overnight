@@ -10,7 +10,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = [
         'username', 'email', 'display_name',
         'daily_email_enabled', 'daily_email_time', 'timezone',
-        'recipient_count', 'daily_email_last_sent',
+        'recipient_list', 'daily_email_last_sent',
         'is_active', 'created_at',
     ]
     list_filter = ['daily_email_enabled', 'is_staff', 'is_active', 'created_at']
@@ -44,7 +44,10 @@ class UserAdmin(BaseUserAdmin):
     )
 
     @admin.display(description='Recipients')
-    def recipient_count(self, obj):
-        """Number of configured recipient addresses for the daily email."""
+    def recipient_list(self, obj):
+        """The actual addresses configured to receive this user's nightly email."""
         from apps.care_tracking.email_utils import parse_recipients
-        return len(parse_recipients(obj))
+        recipients = parse_recipients(obj)
+        if not recipients:
+            return '—'
+        return ', '.join(recipients)
